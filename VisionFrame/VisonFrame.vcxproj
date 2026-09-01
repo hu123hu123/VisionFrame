@@ -65,7 +65,7 @@
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="QtSettings">
-    <QtInstall>msvc2017_64</QtInstall>
+    <QtInstall>5.14.2</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
@@ -145,6 +145,19 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>set QT_BIN=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\bin
+set QT_PLUGINS=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\plugins
+set OPENCV_BIN=$(SolutionDir)Include\opencv4120\x64\bin
+set OUT=$(OutDir)Bin
+if not exist "%OUT%" mkdir "%OUT%"
+if not exist "%OUT%\platforms" mkdir "%OUT%\platforms"
+xcopy /Y /D "%QT_BIN%\Qt5Cored.dll" "%OUT%"
+xcopy /Y /D "%QT_BIN%\Qt5Guid.dll" "%OUT%"
+xcopy /Y /D "%QT_BIN%\Qt5Widgetsd.dll" "%OUT%"
+xcopy /Y /D "%QT_PLUGINS%\platforms\qwindowsd.dll" "%OUT%\platforms"
+xcopy /Y /D "%OPENCV_BIN%\opencv_world4120d.dll" "%OUT%"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Release|Win32'" Label="Configuration">
     <ClCompile>
@@ -177,13 +190,34 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>set QT_BIN=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\bin
+set QT_PLUGINS=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\plugins
+set OPENCV_BIN=$(SolutionDir)Include\opencv4120\x64\bin
+set OUT=$(OutDir)Bin
+if not exist "%OUT%" mkdir "%OUT%"
+if not exist "%OUT%\platforms" mkdir "%OUT%\platforms"
+xcopy /Y /D "%QT_BIN%\Qt5Core.dll" "%OUT%"
+xcopy /Y /D "%QT_BIN%\Qt5Gui.dll" "%OUT%"
+xcopy /Y /D "%QT_BIN%\Qt5Widgets.dll" "%OUT%"
+xcopy /Y /D "%QT_PLUGINS%\platforms\qwindows.dll" "%OUT%\platforms"
+xcopy /Y /D "%OPENCV_BIN%\opencv_world4120.dll" "%OUT%"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <QtRcc Include="VisonFrame.qrc" />
     <QtUic Include="VisonFrame.ui" />
     <QtMoc Include="VisonFrame.h" />
+    <ClCompile Include="GlobalConfig.cpp" />
+    <ClCompile Include="ProjectConfig.cpp" />
     <ClCompile Include="VisonFrame.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="ProjectConfig.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="GlobalConfig.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
