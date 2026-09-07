@@ -128,10 +128,13 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FarmeToolBase.lib;FrameCameraBase.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -140,10 +143,13 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FarmeToolBase.lib;FrameCameraBase.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>set QT_BIN=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\bin
@@ -167,12 +173,15 @@ xcopy /Y /D "%OPENCV_BIN%\opencv_world4120d.dll" "%OUT%"</Command>
       <ConformanceMode>true</ConformanceMode>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FarmeToolBase.lib;FrameCameraBase.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -183,12 +192,15 @@ xcopy /Y /D "%OPENCV_BIN%\opencv_world4120d.dll" "%OUT%"</Command>
       <ConformanceMode>true</ConformanceMode>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include;$(SolutionDir)Include\lib;$(SolutionDir)Include\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>set QT_BIN=D:\Qt\Qt5.14.2\5.14.2\msvc2017_64\bin
@@ -210,6 +222,7 @@ xcopy /Y /D "%OPENCV_BIN%\opencv_world4120.dll" "%OUT%"</Command>
     <QtMoc Include="VisonFrame.h" />
     <ClCompile Include="GlobalConfig.cpp" />
     <ClCompile Include="ProjectConfig.cpp" />
+    <ClCompile Include="TaskItem.cpp" />
     <ClCompile Include="VisonFrame.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -218,6 +231,17 @@ xcopy /Y /D "%OPENCV_BIN%\opencv_world4120.dll" "%OUT%"</Command>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="GlobalConfig.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="TaskItem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FarmeToolBase\FarmeToolBase.vcxproj">
+      <Project>{CC1828CA-D658-4522-8C27-96DD6C1725C0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\FrameCameraBase\FrameCameraBase.vcxproj">
+      <Project>{BAC7685B-C6F6-4BA8-97F9-243B894C5AFB}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

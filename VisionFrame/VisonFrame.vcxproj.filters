@@ -21,6 +21,15 @@
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
     </Filter>
+    <Filter Include="Task">
+      <UniqueIdentifier>{9d7593e5-ae5b-42bc-951c-9bd7eebb91dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{164c7be7-d7f9-41ac-af1e-02aed4fba99b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controller">
+      <UniqueIdentifier>{eca4457a-b121-4937-b86d-cf5fa09ddd9b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="VisonFrame.qrc">
@@ -40,5 +49,25 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TaskItem.cpp">
+      <Filter>Task</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalConfig.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectConfig.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="TaskItem.h">
+      <Filter>Task</Filter>
+    </QtMoc>
+    <QtMoc Include="GlobalConfig.h">
+      <Filter>Config</Filter>
+    </QtMoc>
+    <QtMoc Include="ProjectConfig.h">
+      <Filter>Config</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>
