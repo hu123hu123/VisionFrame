@@ -24,12 +24,12 @@ public:
     void setProjectName(const QString& name) { m_projectName = name; }
     QString prefix() const { return m_prefix; }
 
-    void loadConfig(const QString& configFilePath);   // 从文件加载二进制
-    void saveConfig(const QString& configFilePath) const; // 保存为二进制
+    void loadConfig(const QString& configFilePath);   // 锟斤拷锟侥硷拷锟斤拷锟截讹拷锟斤拷锟斤拷
+    void saveConfig(const QString& configFilePath) const; // 锟斤拷锟斤拷为锟斤拷锟斤拷锟斤拷
 
 private:
     ProjectConfig(QObject* parent = nullptr) : QObject(parent) {
-        // 注意：不会传入有效 parent，安全
+        // 注锟解：锟斤拷锟结传锟斤拷锟斤拷效 parent锟斤拷锟斤拷全
         qDebug() << "ProjectConfig singleton created.";
     }
     ~ProjectConfig() {

@@ -55,6 +55,17 @@ nunit-*.xml
 [Rr]eleasePS/
 dlldata.c
 
+# CMake build directory and cache
+build/
+build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeLists.txt.user
+*.cmake.user
+compile_commands.json
+.cache/
+
 # Benchmark Results
 BenchmarkDotNet.Artifacts/
 
