@@ -1,10 +1,12 @@
 ﻿#include "VisonFrame.h"
+#include "NodeEditor/ToolFactory.h"
 #include <QtWidgets/QApplication>
 #include <windows.h>
 #include <string.h>
 
-// 将 DLL 搜索路径设置为 exe 所在目录下的 Bin 子目录
-// 使程序运行时能从 Bin 自动加载依赖的第三方 DLL（Qt、OpenCV 等）
+// 将 DLL 搜索路径设置为 exe 所在目录
+// Qt/OpenCV/业务 DLL 均已由 CMake 拷贝到 exe 同级目录，Windows 加载器自动查找
+// 此函数保留用于将来按需扩展 DLL 搜索路径（如 Bin 子目录中的可选插件）
 static void setupDllSearchPath()
 {
     wchar_t exePath[MAX_PATH] = { 0 };
@@ -55,6 +57,8 @@ int main(int argc, char* argv[])
     setupDllSearchPath();
 
     QApplication app(argc, argv);
+    registerBuiltinTools();
+
     VisionFrame window;
     window.show();
 

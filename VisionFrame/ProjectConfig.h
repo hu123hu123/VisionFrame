@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include <QObject>
 #include <QString>
 #include <QDataStream>
 #include <QFile>
 #include <QDebug>
+#include "TaskItem.h"
 
 class ProjectConfig : public QObject
 {
@@ -15,6 +16,8 @@ public:
     ProjectConfig(const ProjectConfig&) = delete;
     ProjectConfig& operator=(const ProjectConfig&) = delete;
 
+    QVector<TaskItem*> taskItems;//任务列表
+
     static ProjectConfig& instance() {
         static ProjectConfig instance;
         return instance;
@@ -24,12 +27,12 @@ public:
     void setProjectName(const QString& name) { m_projectName = name; }
     QString prefix() const { return m_prefix; }
 
-    void loadConfig(const QString& configFilePath);   // ���ļ����ض�����
-    void saveConfig(const QString& configFilePath) const; // ����Ϊ������
+    void loadConfig(const QString& configFilePath);   // 从文件加载配置
+    void saveConfig(const QString& configFilePath) const; // 保存为配置文件
 
 private:
     ProjectConfig(QObject* parent = nullptr) : QObject(parent) {
-        // ע�⣺���ᴫ����Ч parent����ȫ
+        // 注意：不传递无效 parent，保证安全
         qDebug() << "ProjectConfig singleton created.";
     }
     ~ProjectConfig() {

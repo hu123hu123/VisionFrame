@@ -1,4 +1,4 @@
-#include "TaskItem.h"
+﻿#include "TaskItem.h"
 #include "FrameDataQueueRegistry.h"
 
 TaskItem::TaskItem(QObject *parent)
@@ -29,6 +29,10 @@ void TaskItem::StopTask()
 		m_dataQueue->stop();
 	this->requestInterruption();
 	this->wait();
+	{
+		QMutexLocker lock(&m_outputMutex);
+		m_currentNodeId.clear();
+	}
 }
 
 void TaskItem::run()
@@ -36,19 +40,135 @@ void TaskItem::run()
 	while (!m_stop)
 	{
 		doTask();
+		if (!m_stop)
+			QThread::msleep(m_frameIntervalMs.load());
 	}
 }
 
 void TaskItem::doTask()
 {
-	for (FrameToolBase* tool : m_tools)
+	if (!m_graph.nodes.isEmpty())
+	{
+		executeGraphOnce();
+	}
+	else if (!m_tools.isEmpty())
+	{
+		// 兼容旧线性执行（无图任务）
+		for (FrameToolBase* tool : m_tools)
+		{
+			if (m_stop)
+				return;
+			tool->execute();
+			if (m_stop)
+				return;
+		}
+	}
+}
+
+void TaskItem::executeGraphOnce()
+{
+	QStringList order;
+	{
+		QMutexLocker lock(&m_outputMutex);
+		QString cycle;
+		if (!m_graph.topoOrder(order, &cycle))
+		{
+			// 图有环，无法执行
+			m_currentNodeId = cycle;
+			return;
+		}
+	}
+
+	for (const QString& id : order)
 	{
 		if (m_stop)
 			return;
-		tool->execute(); // FrameDeQueueTool 在此阻塞，作为线程启用条件
-		if (m_stop)
-			return;
+		GraphNodeData* node = m_graph.findNode(id);
+		if (!node || !node->tool)
+			continue;
+
+		std::map<std::string, NodeData> inputs;
+		for (const auto& e : m_graph.edges)
+		{
+			if (e.toNode == id)
+			{
+				const GraphNodeData* up = m_graph.findNode(e.fromNode);
+				if (up)
+				{
+					auto it = up->outputs.find(e.fromPin.toStdString());
+					if (it != up->outputs.end())
+						inputs[e.toPin.toStdString()] = it->second;
+				}
+			}
+		}
+
+		{
+			QMutexLocker lock(&m_outputMutex);
+			m_currentNodeId = id;
+		}
+
+		std::map<std::string, NodeData> outputs;
+		node->tool->execute(inputs, outputs);
+
+		{
+			QMutexLocker lock(&m_outputMutex);
+			node->outputs = std::move(outputs);
+		}
 	}
+	m_frameCounter.fetch_add(1);
+}
+
+void TaskItem::runOnce()
+{
+	m_stop = false;
+	doTask();
+}
+
+bool TaskItem::snapshotNodeOutputs(const QString& nodeId, std::map<std::string, NodeData>& out) const
+{
+	QMutexLocker lock(&m_outputMutex);
+	for (const auto& n : m_graph.nodes)
+	{
+		if (n.id == nodeId)
+		{
+			out = n.outputs;
+			return true;
+		}
+	}
+	return false;
+}
+
+int TaskItem::frameCounter() const
+{
+	return m_frameCounter.load();
+}
+
+QString TaskItem::currentNodeId() const
+{
+	QMutexLocker lock(&m_outputMutex);
+	return m_currentNodeId;
+}
+
+void TaskItem::setFrameIntervalMs(int ms)
+{
+	if (ms < 1)
+		ms = 1;
+	m_frameIntervalMs.store(ms);
+}
+
+int TaskItem::frameIntervalMs() const
+{
+	return m_frameIntervalMs.load();
+}
+
+TaskGraph& TaskItem::graph()
+{
+	return m_graph;
+}
+
+void TaskItem::setGraph(const TaskGraph& g)
+{
+	m_graph = g;
 }
 
 void TaskItem::registerQueue()

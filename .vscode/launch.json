@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+
+        {
+            "name": "(MSVC) 调试 Release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/App/VisionFrame.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/App",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/App/Bin;D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/bin;${workspaceFolder}/Include/opencv4120/x64/bin;${env:PATH}"
+                }
+            ],
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "preLaunchTask": "CMake Build Release",
+            "visualizerFile": "c:\\Users\\mrzho\\AppData\\Roaming\\Code\\User\\workspaceStorage\\4758e575d092b6ee20d3859aa8644c90\\tonka3000.qtvsctools\\qt.natvis.xml"
+        }
+    ]
+}

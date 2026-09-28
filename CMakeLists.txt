@@ -14,12 +14,13 @@ set(VF_BIN_DIR       "${VF_APP_DIR}/Bin")
 set(VF_INCLUDE_DIR   "${CMAKE_SOURCE_DIR}/Include/include")
 set(VF_LIB_DIR       "${CMAKE_SOURCE_DIR}/Include/lib")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY         "${VF_APP_DIR}")
+# Windows 上 DLL 属于 runtime 产物，输出到 App/Bin；exe 通过 target 属性覆盖到 App/
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY         "${VF_BIN_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY         "${VF_BIN_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY         "${VF_LIB_DIR}")
 # 多配置生成器（VS）下按配置分目录会破坏 App/Bin 的 DLL 搜索路径，统一扁平输出
 foreach(cfg DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
-    string(CONCAT CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${VF_APP_DIR}")
+    string(CONCAT CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${VF_BIN_DIR}")
     string(CONCAT CMAKE_LIBRARY_OUTPUT_DIRECTORY_${cfg} "${VF_BIN_DIR}")
     string(CONCAT CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${cfg} "${VF_LIB_DIR}")
 endforeach()
@@ -40,6 +41,14 @@ if(MSVC)
     add_compile_definitions(_HAS_DEPRECATED_ITERATOR=1 _SILENCE_STDEXT_DEPRECATION_WARNING)
     # 多处理器编译
     add_compile_options(/MP)
+
+    # Release 配置同时生成调试信息（PDB），支持断点调试
+    # 默认 Release 只有 /O2 /Ob2 /DNDEBUG，不含 /Zi；此处补充 /Zi 与链接器 /DEBUG
+    add_compile_options($<$<CONFIG:Release>:/Zi>)
+    add_compile_options($<$<CONFIG:Release>:/FS>)
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 endif()
 
 # 默认以 x64 为目标架构（与原 MSBuild Release|x64 一致）
@@ -103,4 +112,5 @@ file(MAKE_DIRECTORY "${VF_BIN_DIR}")
 add_subdirectory(FarmeToolBase)
 add_subdirectory(FrameCameraBase)
 add_subdirectory(FrameQueueTool)
+add_subdirectory(FrameImageTools)
 add_subdirectory(VisionFrame)

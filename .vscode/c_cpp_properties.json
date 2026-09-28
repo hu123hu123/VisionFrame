@@ -1,0 +1,37 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/include",
+                "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/include/QtCore",
+                "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/include/QtGui",
+                "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/include/QtWidgets",
+                "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/include/QtANGLE",
+                "${workspaceFolder}/Include/opencv4120/include",
+                "${workspaceFolder}/Include/opencv4120/include/opencv2",
+                "${workspaceFolder}/FarmeToolBase",
+                "${workspaceFolder}/FrameCameraBase",
+                "${workspaceFolder}/FrameQueueTool",
+                "${workspaceFolder}/Include/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "_CRT_SECURE_NO_WARNINGS",
+                "_WINDLL",
+                "_HAS_DEPRECATED_ITERATOR=1",
+                "QT_WIDGETS_LIB",
+                "QT_GUI_LIB",
+                "QT_CORE_LIB"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-msvc-x64",
+            "compilerPath": "D:/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe"
+        }
+    ],
+    "version": 4
+}

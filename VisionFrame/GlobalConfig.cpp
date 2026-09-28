@@ -1,2 +1,2 @@
-#include "GlobalConfig.h"
+﻿#include "GlobalConfig.h"
 #include <QDebug>

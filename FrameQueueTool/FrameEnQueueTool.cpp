@@ -1,4 +1,4 @@
-#include "FrameEnQueueTool.h"
+﻿#include "FrameEnQueueTool.h"
 #include "FrameDataQueueRegistry.h"
 #include <QLineEdit>
 #include <QLabel>

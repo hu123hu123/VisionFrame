@@ -1,17 +1,20 @@
-#pragma once
+﻿#pragma once
 
 #include <QThread>
 #include <QString>
+#include <QMutex>
 #include "FrameToolBase.h"
 #include "FrameCameraBase.h"
 #include "FrameDataQueue.h"
+#include "Graph/TaskGraph.h"
 #include "opencv2/opencv.hpp"
 #include <any>
 #include <memory>
+#include <atomic>
 
 #pragma comment(lib, "FrameToolBase.lib")
 #pragma comment(lib, "FrameCameraBase.lib")
-// FrameQueueTool.lib 通过 VisonFrame.vcxproj 的 ProjectReference 链接，
+// FrameQueueTool.lib 通过 VisionFrame.vcxproj 的 ProjectReference 链接，
 // 该 lib 不在 Include\lib 中，故不在此用 #pragma。
 
 // 一个 TaskItem = 一个任务 = 一个线程(QThread)。
@@ -58,9 +61,25 @@ public:
 	// 暴露本任务队列（shared_ptr 共享所有权）。
 	std::shared_ptr<FrameDataQueue> dataQueue() const;
 
+	// —— 蓝图式任务流图（数据流驱动执行） ——
+	TaskGraph& graph();
+	void setGraph(const TaskGraph& g);
+
+	// 同步执行一轮拓扑通行（供“单步”使用，仅在任务未运行时调用）。
+	void runOnce();
+
+	// 线程安全读取某节点最近输出（供图像显示）。
+	bool snapshotNodeOutputs(const QString& nodeId, std::map<std::string, NodeData>& out) const;
+
+	int     frameCounter() const;
+	QString currentNodeId() const;
+	void    setFrameIntervalMs(int ms);
+	int     frameIntervalMs() const;
+
 private:
 	void run() override;
 	void doTask();
+	void executeGraphOnce();
 	void registerQueue();
 
 private:
@@ -70,6 +89,12 @@ private:
 	QVector<cv::Mat>                           m_imgs;
 	std::shared_ptr<FrameDataQueue>            m_dataQueue;
 	std::atomic<bool>                          m_stop{ false };
+
+	TaskGraph                                 m_graph;
+	mutable QMutex                            m_outputMutex;  // 保护各节点 outputs 与 m_currentNodeId
+	std::atomic<int>                          m_frameCounter{ 0 };
+	QString                                   m_currentNodeId; // 运行态高亮节点
+	std::atomic<int>                          m_frameIntervalMs{ 33 };
 };
 
 

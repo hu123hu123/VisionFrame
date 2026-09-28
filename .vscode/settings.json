@@ -1,0 +1,9 @@
+{
+    "cmake.useCMakePresets": "always",
+    "cmake.defaultPreset": "Release",
+    "cmake.configureOnOpen": true,
+    "cmake.parallelJobs": 0,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "files.encoding": "utf8bom",
+    "files.autoGuessEncoding": false
+}

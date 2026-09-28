@@ -1,7 +1,7 @@
-#include "ProjectConfig.h"
+ï»¿#include "ProjectConfig.h"
 #include <QMetaProperty>
 #include <QVariantMap>
-#include <QFileInfo>   // ĞÂÔöÍ·ÎÄ¼ş
+#include <QFileInfo>   // æ–‡ä»¶ä¿¡æ¯å¤´æ–‡ä»¶
 
 void ProjectConfig::serialize(QDataStream& out) const
 {
@@ -42,10 +42,10 @@ void ProjectConfig::deserialize(QDataStream& in)
     }
 }
 
-// ´Ó¶ş½øÖÆÎÄ¼ş¼ÓÔØ
+// ä»é…ç½®æ–‡ä»¶åŠ è½½
 void ProjectConfig::loadConfig(const QString& configFilePath)
 {
-    // ¼ì²é²¢²¹È«ºó×º
+    // æ£€æŸ¥å¹¶å®‰å…¨æ·»åŠ åç¼€
     QString filePath = configFilePath;
     QFileInfo info(filePath);
     if (info.suffix().isEmpty()) {
@@ -67,10 +67,10 @@ void ProjectConfig::loadConfig(const QString& configFilePath)
     qDebug() << "Config loaded from" << filePath;
 }
 
-// ±£´æÎª¶ş½øÖÆÎÄ¼ş
+// ä¿å­˜ä¸ºé…ç½®æ–‡ä»¶
 void ProjectConfig::saveConfig(const QString& configFilePath) const
 {
-    // ¼ì²é²¢²¹È«ºó×º
+    // æ£€æŸ¥å¹¶å®‰å…¨æ·»åŠ åç¼€
     QString filePath = configFilePath;
     QFileInfo info(filePath);
     if (info.suffix().isEmpty()) {

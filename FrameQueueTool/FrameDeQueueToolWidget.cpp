@@ -1,4 +1,4 @@
-#include "FrameDeQueueToolWidget.h"
+﻿#include "FrameDeQueueToolWidget.h"
 
 FrameDeQueueToolWidget::FrameDeQueueToolWidget(QWidget *parent)
 	: QWidget(parent)

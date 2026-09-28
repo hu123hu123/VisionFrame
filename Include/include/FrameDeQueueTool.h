@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "FrameToolBase.h"
 #include "FrameDataQueue.h"

@@ -1,30 +1,30 @@
-#pragma once
+ï»¿#pragma once
 
 #include <QObject>
-#include "ProjectConfig.h"   // °üº¬ËùÓĞĞèÒª×¢²áµÄµ¥ÀıÍ·ÎÄ¼ş
+#include "ProjectConfig.h"   // éœ€è¦æ³¨å†Œçš„å¤´æ–‡ä»¶
 
 class GlobalConfig : public QObject
 {
     Q_OBJECT
 
 public:
-    // ½ûÖ¹¿½±´
+    // ç¦æ­¢æ‹·è´
     GlobalConfig(const GlobalConfig&) = delete;
     GlobalConfig& operator=(const GlobalConfig&) = delete;
 
-    // µ¥Àı·ÃÎÊ
+    // å•ä¾‹æ¨¡å¼
     static GlobalConfig& instance() {
         static GlobalConfig instance;
         return instance;
     }
 
-    // ×¢²áµÄµ¥Àı·ÃÎÊ½Ó¿Ú£¨Ö»¶Á£¬ÒòÎªµ¥Àı±¾ÉíÔÊĞíĞŞ¸Ä£©
+    // æ³¨æ„ï¼šå…¨å±€æ¥å£ï¼Œåªå…è®¸è¯»å–ï¼Œä¸å…è®¸ç›´æ¥ä¿®æ”¹
     ProjectConfig& projectConfig() const { return m_projectConfig; }
 
-    // Î´À´¿ÉÌí¼Ó¸ü¶à£ºOtherConfig& otherConfig() const;
+    // æœªæ¥å¯æ·»åŠ æ›´å¤šï¼šOtherConfig& otherConfig() const;
 
 private:
-    // Ë½ÓĞ¹¹ÔìºÍÎö¹¹
+    // ç§æœ‰æ„é€ å‡½æ•°
     GlobalConfig(QObject* parent = nullptr) : QObject(parent) {
         qDebug() << "GlobalConfig singleton created.";
     }
@@ -32,6 +32,6 @@ private:
         qDebug() << "GlobalConfig destroyed.";
     }
 
-    // ³ÖÓĞËùÓĞ×¢²áµÄµ¥ÀıÒıÓÃ£¨½ö×ö·ÃÎÊ´úÀí£¬²»¸ºÔğÉúÃüÖÜÆÚ£©
+    // å…¨å±€é…ç½®æ³¨å†Œçš„å…¨å±€å¼•ç”¨ï¼Œé¿å…ä½¿ç”¨æ—¶è®¿é—®æ—¶å‡ºç°é—®é¢˜
     ProjectConfig& m_projectConfig = ProjectConfig::instance();
 };

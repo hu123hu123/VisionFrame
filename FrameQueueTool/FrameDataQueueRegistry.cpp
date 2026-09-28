@@ -1,4 +1,4 @@
-#include "FrameDataQueueRegistry.h"
+﻿#include "FrameDataQueueRegistry.h"
 
 FrameDataQueueRegistry& FrameDataQueueRegistry::instance()
 {
