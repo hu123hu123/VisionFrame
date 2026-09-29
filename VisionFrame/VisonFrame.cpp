@@ -219,5 +219,5 @@ void VisionFrame::onHighlightTick()
 {
     if (!m_currentTask)
         return;
-    m_editorScene->setActiveNode(m_currentTask->currentNodeId());
+    m_editorScene->applyRunStates(m_currentTask->nodeRunStates());
 }

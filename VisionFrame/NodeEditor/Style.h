@@ -38,4 +38,5 @@ inline QColor text()          { return QColor(0xdddddd); }
 inline QColor titleBarText()  { return QColor(0xffffff); }
 inline QColor activeBorder()  { return QColor(0x2dff8c); }
 inline QColor selectBorder()  { return QColor(0x2d8cff); }
+inline QColor failBorder()    { return QColor(0xff4d4f); }
 }

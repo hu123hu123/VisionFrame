@@ -11,6 +11,9 @@
 #include <string>
 #include "FrameToolBase.h"
 
+// 节点运行态（供执行高亮）：Idle=默认，Running=执行中(绿)，Success=成功(复原)，Failed=失败(红)。
+enum class NodeRunState : int { Idle = 0, Running, Success, Failed };
+
 // 图中的一个节点：对应一个工具实例。
 struct GraphNodeData
 {

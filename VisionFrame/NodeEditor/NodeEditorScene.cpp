@@ -68,13 +68,10 @@ void NodeEditorScene::addNode(const QString& typeId, const QPointF& scenePos)
     emit graphChanged();
 }
 
-void NodeEditorScene::setActiveNode(const QString& id)
+void NodeEditorScene::applyRunStates(const QHash<QString, NodeRunState>& states)
 {
-    if (m_activeNodeId == id)
-        return;
-    m_activeNodeId = id;
     for (auto it = m_nodeItems.begin(); it != m_nodeItems.end(); ++it)
-        it.value()->setActive(it.key() == id);
+        it.value()->setRunState(states.value(it.key(), NodeRunState::Idle));
 }
 
 void NodeEditorScene::deleteSelection()

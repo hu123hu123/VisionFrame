@@ -31,11 +31,11 @@ NodeGraphicsItem::NodeGraphicsItem(GraphNodeData* node, QGraphicsItem* parent)
     layoutPins();
 }
 
-void NodeGraphicsItem::setActive(bool b)
+void NodeGraphicsItem::setRunState(NodeRunState s)
 {
-    if (m_active == b)
+    if (m_runState == s)
         return;
-    m_active = b;
+    m_runState = s;
     update();
 }
 
@@ -134,10 +134,16 @@ void NodeGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, QWidg
                 Qt::AlignRight | Qt::AlignVCenter, pin->name());
     }
 
-    // 选中 / 运行态高亮描边
-    if (m_active)
+    // 运行态高亮描边：执行中=绿、失败=红，否则仅保留选中描边
+    if (m_runState == NodeRunState::Running)
     {
         p->setPen(QPen(NodeStyle::activeBorder(), 2.5));
+        p->setBrush(Qt::NoBrush);
+        p->drawRoundedRect(r.adjusted(-3, -3, 3, 3), 7, 7);
+    }
+    else if (m_runState == NodeRunState::Failed)
+    {
+        p->setPen(QPen(NodeStyle::failBorder(), 2.5));
         p->setBrush(Qt::NoBrush);
         p->drawRoundedRect(r.adjusted(-3, -3, 3, 3), 7, 7);
     }

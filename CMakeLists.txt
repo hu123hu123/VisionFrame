@@ -77,11 +77,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# =============================================================================
-# OpenCV（仓库内附带 OpenCVConfig.cmake，但其内部硬编码了 x64/vc16/{lib,bin} 路径，
-# 与仓库实际布局 Include/opencv4120/x64/{lib,bin} 不一致，无法直接 find_package。
-# 这里改用显式路径，与原 vcxproj 的 AdditionalInclude/LibraryDirectories 一致）
-# =============================================================================
 set(OPENCV_ROOT     "${CMAKE_SOURCE_DIR}/Include/opencv4120"          CACHE PATH "OpenCV 安装根")
 set(OPENCV_INCLUDE  "${OPENCV_ROOT}/include"                         CACHE PATH "OpenCV 头文件目录")
 set(OPENCV_LIB_DIR  "${OPENCV_ROOT}/x64/lib"                          CACHE PATH "OpenVC 导入库目录")

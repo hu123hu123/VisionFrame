@@ -21,7 +21,7 @@ public:
     void rebuild();
     void addNode(const QString& typeId, const QPointF& scenePos);
 
-    void setActiveNode(const QString& id);
+    void applyRunStates(const QHash<QString, NodeRunState>& states);
 
     bool editEnabled() const { return m_editEnabled; }
     void setEditEnabled(bool b) { m_editEnabled = b; }
@@ -46,6 +46,5 @@ private:
     QHash<QString, NodeGraphicsItem*> m_nodeItems;
     PinItem* m_wireSource{ nullptr };
     WireItem* m_tempWire{ nullptr };
-    QString m_activeNodeId;
     bool m_editEnabled{ true };
 };

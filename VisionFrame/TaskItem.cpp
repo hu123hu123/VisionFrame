@@ -32,6 +32,7 @@ void TaskItem::StopTask()
 	{
 		QMutexLocker lock(&m_outputMutex);
 		m_currentNodeId.clear();
+		m_nodeStates.clear();
 	}
 }
 
@@ -105,14 +106,17 @@ void TaskItem::executeGraphOnce()
 		{
 			QMutexLocker lock(&m_outputMutex);
 			m_currentNodeId = id;
+			m_nodeStates[id] = NodeRunState::Running;
 		}
 
 		std::map<std::string, NodeData> outputs;
-		node->tool->execute(inputs, outputs);
+		const ToolResult r = node->tool->execute(inputs, outputs);
 
 		{
 			QMutexLocker lock(&m_outputMutex);
 			node->outputs = std::move(outputs);
+			m_nodeStates[id] = (r == ToolResult::ToolOk)
+				? NodeRunState::Success : NodeRunState::Failed;
 		}
 	}
 	m_frameCounter.fetch_add(1);
@@ -147,6 +151,12 @@ QString TaskItem::currentNodeId() const
 {
 	QMutexLocker lock(&m_outputMutex);
 	return m_currentNodeId;
+}
+
+QHash<QString, NodeRunState> TaskItem::nodeRunStates() const
+{
+	QMutexLocker lock(&m_outputMutex);
+	return m_nodeStates;
 }
 
 void TaskItem::setFrameIntervalMs(int ms)

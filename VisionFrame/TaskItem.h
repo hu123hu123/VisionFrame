@@ -2,6 +2,7 @@
 
 #include <QThread>
 #include <QString>
+#include <QHash>
 #include <QMutex>
 #include "FrameToolBase.h"
 #include "FrameCameraBase.h"
@@ -71,6 +72,9 @@ public:
 	// 线程安全读取某节点最近输出（供图像显示）。
 	bool snapshotNodeOutputs(const QString& nodeId, std::map<std::string, NodeData>& out) const;
 
+	// 线程安全读取各节点运行态（执行中=绿 / 成功复原 / 失败=红）。
+	QHash<QString, NodeRunState> nodeRunStates() const;
+
 	int     frameCounter() const;
 	QString currentNodeId() const;
 	void    setFrameIntervalMs(int ms);
@@ -94,6 +98,7 @@ private:
 	mutable QMutex                            m_outputMutex;  // 保护各节点 outputs 与 m_currentNodeId
 	std::atomic<int>                          m_frameCounter{ 0 };
 	QString                                   m_currentNodeId; // 运行态高亮节点
+	QHash<QString, NodeRunState>              m_nodeStates;    // 各节点运行态
 	std::atomic<int>                          m_frameIntervalMs{ 33 };
 };
 

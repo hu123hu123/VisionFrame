@@ -27,7 +27,7 @@ public:
     PinItem* findPin(const QString& name);
     QList<PinItem*> pinItems() const;
 
-    void setActive(bool b);
+    void setRunState(NodeRunState s);
 
 signals:
     void editRequested(const QString& nodeId);
@@ -48,7 +48,7 @@ private:
     std::vector<FPort> m_outputs;
     QHash<QString, PinItem*> m_inputPins;
     QHash<QString, PinItem*> m_outputPins;
-    bool m_active{ false };
+    NodeRunState m_runState{ NodeRunState::Idle };
 
     double m_width{ 180.0 };
     double m_titleH{ 22.0 };
