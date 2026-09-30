@@ -13,25 +13,26 @@
 
 #include <QToolBar>
 #include <QComboBox>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QAction>
-#include <QActionGroup>
 #include <QDockWidget>
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QMessageBox>
 #include <QTimer>
+#include <QFileDialog>
+#include <QFileInfo>
 
 VisionFrame::VisionFrame(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::VisionFrame)
 {
     ui->setupUi(this);
 
-    // 编辑/运行 互斥切换（QActionGroup 需在代码中建立）
-    auto* modeGroup = new QActionGroup(this);
-    modeGroup->setExclusive(true);
-    modeGroup->addAction(ui->actionEdit);
-    modeGroup->addAction(ui->actionRunMode);
+    // 隐藏各 dock 标题栏，页面切换交由工具栏分组按钮控制
+    ui->m_paletteDock->setTitleBarWidget(new QWidget());
+    ui->m_editorDock->setTitleBarWidget(new QWidget());
+    ui->m_displayDock->setTitleBarWidget(new QWidget());
 
     // 蓝图场景与视图绑定
     m_editorScene = new NodeEditorScene(this);
@@ -41,16 +42,25 @@ VisionFrame::VisionFrame(QWidget* parent)
     splitDockWidget(ui->m_editorDock, ui->m_displayDock, Qt::Horizontal);
     resizeDocks({ ui->m_editorDock, ui->m_displayDock }, { 640, 360 }, Qt::Horizontal);
 
-    // dock 收放（收起进侧边 / 展开）
-    ui->mainToolBar->addAction(ui->m_paletteDock->toggleViewAction());
-    ui->mainToolBar->addAction(ui->m_editorDock->toggleViewAction());
-    ui->mainToolBar->addAction(ui->m_displayDock->toggleViewAction());
+    // 页面分组切换
+    connect(ui->actionTogglePalette, &QAction::toggled, ui->m_paletteDock, &QDockWidget::setVisible);
+    connect(ui->actionToggleEditor, &QAction::toggled, ui->m_editorDock, &QDockWidget::setVisible);
+    connect(ui->actionToggleDisplay, &QAction::toggled, ui->m_displayDock, &QDockWidget::setVisible);
 
-    connect(ui->actionEdit, &QAction::toggled, this, [this](bool c) { if (c) applyMode(true); });
-    connect(ui->actionRunMode, &QAction::toggled, this, [this](bool c) { if (c) applyMode(false); });
+    // 文件操作
+    connect(ui->actionNewProject, &QAction::triggered, this, &VisionFrame::onNewProject);
+    connect(ui->actionOpenProject, &QAction::triggered, this, &VisionFrame::onOpenProject);
+    connect(ui->actionSaveProject, &QAction::triggered, this, &VisionFrame::onSaveProject);
+
+    // 任务管理
     connect(ui->actionAddTask, &QAction::triggered, this, &VisionFrame::onAddTask);
     connect(ui->actionDelTask, &QAction::triggered, this, &VisionFrame::onRemoveTask);
     connect(ui->m_taskCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &VisionFrame::onTaskSelectionChanged);
+    ui->m_taskCombo->setEditable(true);
+    ui->m_taskCombo->setInsertPolicy(QComboBox::NoInsert);
+    connect(ui->m_taskCombo->lineEdit(), &QLineEdit::editingFinished, this, &VisionFrame::onTaskRename);
+
+    // 运行控制
     connect(ui->actionRun, &QAction::triggered, this, &VisionFrame::onStartRun);
     connect(ui->actionStop, &QAction::triggered, this, &VisionFrame::onStopRun);
     connect(ui->actionStep, &QAction::triggered, this, &VisionFrame::onStepRun);
@@ -69,9 +79,10 @@ VisionFrame::VisionFrame(QWidget* parent)
     applyMode(true);
 
     if (ProjectConfig::instance().taskItems.isEmpty())
-        addTaskInternal(QString::fromUtf8("Task1"));
+        addTaskInternal(uniqueTaskName(QStringLiteral("Task")));
 
     refreshTaskCombo();
+    updateWindowTitle();
 }
 
 VisionFrame::~VisionFrame()
@@ -86,12 +97,15 @@ void VisionFrame::applyMode(bool editMode)
     ui->m_editorView->setInteractive(editMode);
     m_editorScene->setEditEnabled(editMode);
     ui->m_palette->setEnabled(editMode);
-    ui->actionRun->setVisible(!editMode);
-    ui->actionStop->setVisible(!editMode);
-    ui->actionStep->setVisible(!editMode);
-
-    if (editMode)
-        TaskController::instance().StopAllTasks();
+    ui->m_taskCombo->setEnabled(editMode);
+    ui->actionAddTask->setEnabled(editMode);
+    ui->actionDelTask->setEnabled(editMode);
+    ui->actionNewProject->setEnabled(editMode);
+    ui->actionOpenProject->setEnabled(editMode);
+    ui->actionSaveProject->setEnabled(editMode);
+    ui->actionRun->setEnabled(editMode);
+    ui->actionStop->setEnabled(!editMode);
+    ui->actionStep->setEnabled(editMode);
 }
 
 QVector<TaskItem*> VisionFrame::allTasks() const
@@ -99,14 +113,15 @@ QVector<TaskItem*> VisionFrame::allTasks() const
     return ProjectConfig::instance().taskItems;
 }
 
-void VisionFrame::addTaskInternal(const QString& name)
+TaskItem* VisionFrame::addTaskInternal(const QString& name)
 {
     auto* task = new TaskItem();
     task->setTaskName(name);
     TaskController::instance().AddTask(task);
+    return task;
 }
 
-void VisionFrame::refreshTaskCombo()
+void VisionFrame::refreshTaskCombo(TaskItem* selectTask)
 {
     ui->m_taskCombo->blockSignals(true);
     ui->m_taskCombo->clear();
@@ -115,8 +130,11 @@ void VisionFrame::refreshTaskCombo()
         ui->m_taskCombo->addItem(t->taskName());
     ui->m_taskCombo->blockSignals(false);
 
+    int idx = selectTask ? items.indexOf(selectTask) : 0;
+    if (idx < 0)
+        idx = 0;
     if (!items.isEmpty())
-        ui->m_taskCombo->setCurrentIndex(0);
+        ui->m_taskCombo->setCurrentIndex(idx);
     onTaskSelectionChanged(ui->m_taskCombo->currentIndex());
 }
 
@@ -126,11 +144,37 @@ void VisionFrame::bindToTask(TaskItem* task)
     ui->m_display->refreshTasks(allTasks(), task);
 }
 
+QString VisionFrame::uniqueTaskName(const QString& base) const
+{
+    const auto& items = allTasks();
+    auto exists = [&items](const QString& name) {
+        for (const TaskItem* t : items)
+            if (t->taskName() == name)
+                return true;
+        return false;
+    };
+
+    if (!exists(base))
+        return base;
+
+    int counter = 2;
+    while (true) {
+        const QString candidate = base + QStringLiteral("_") + QString::number(counter++);
+        if (!exists(candidate))
+            return candidate;
+    }
+}
+
+void VisionFrame::updateWindowTitle()
+{
+    const QString name = ProjectConfig::instance().projectName().trimmed();
+    setWindowTitle(name.isEmpty() ? QStringLiteral("VisionFrame")
+                                  : QStringLiteral("VisionFrame - %1").arg(name));
+}
+
 void VisionFrame::onAddTask()
 {
-    const int n = ProjectConfig::instance().taskItems.size() + 1;
-    addTaskInternal(QString("Task%1").arg(n));
-    refreshTaskCombo();
+    refreshTaskCombo(addTaskInternal(uniqueTaskName(QStringLiteral("Task"))));
 }
 
 void VisionFrame::onRemoveTask()
@@ -140,9 +184,17 @@ void VisionFrame::onRemoveTask()
     if (idx < 0 || idx >= items.size())
         return;
 
+    if (items.size() <= 1) {
+        QMessageBox::warning(this, QString::fromUtf8("提示"), QString::fromUtf8("至少保留一个任务。"));
+        return;
+    }
+
     TaskItem* t = items[idx];
-    if (m_currentTask == t)
-    {
+    if (QMessageBox::question(this, QString::fromUtf8("确认"),
+            QString::fromUtf8("确定删除任务“%1”吗？").arg(t->taskName())) != QMessageBox::Yes)
+        return;
+
+    if (m_currentTask == t) {
         m_currentTask = nullptr;
         m_editorScene->setGraph(nullptr);
     }
@@ -155,6 +207,31 @@ void VisionFrame::onTaskSelectionChanged(int idx)
     const auto& items = ProjectConfig::instance().taskItems;
     m_currentTask = (idx >= 0 && idx < items.size()) ? items[idx] : nullptr;
     bindToTask(m_currentTask);
+}
+
+void VisionFrame::onTaskRename()
+{
+    if (!m_currentTask)
+        return;
+
+    const QString newName = ui->m_taskCombo->currentText().trimmed();
+    if (newName.isEmpty() || newName == m_currentTask->taskName()) {
+        refreshTaskCombo(m_currentTask);
+        return;
+    }
+
+    for (const TaskItem* t : allTasks()) {
+        if (t != m_currentTask && t->taskName() == newName) {
+            QMessageBox::warning(this, QString::fromUtf8("提示"),
+                QString::fromUtf8("任务名“%1”已存在。").arg(newName));
+            refreshTaskCombo(m_currentTask);
+            return;
+        }
+    }
+
+    m_currentTask->setTaskName(newName);
+    ui->m_taskCombo->setItemText(ui->m_taskCombo->currentIndex(), newName);
+    ui->m_display->refreshTasks(allTasks(), m_currentTask);
 }
 
 void VisionFrame::onStartRun()
@@ -217,7 +294,64 @@ void VisionFrame::onNodeEditRequested(const QString& nodeId)
 
 void VisionFrame::onHighlightTick()
 {
+    bool running = false;
+    for (const TaskItem* t : allTasks()) {
+        if (t->isRunning()) { running = true; break; }
+    }
+    if (running != m_running) {
+        m_running = running;
+        applyMode(!running);
+    }
+
     if (!m_currentTask)
         return;
     m_editorScene->applyRunStates(m_currentTask->nodeRunStates());
+}
+
+void VisionFrame::onNewProject()
+{
+    TaskController::instance().StopAllTasks();
+    TaskController::instance().ClearAllTasks();
+    applyMode(true);
+
+    addTaskInternal(uniqueTaskName(QStringLiteral("Task")));
+    m_projectFilePath.clear();
+    ProjectConfig::instance().setProjectName(QString());
+    refreshTaskCombo();
+    updateWindowTitle();
+}
+
+void VisionFrame::onOpenProject()
+{
+    const QString p = QFileDialog::getOpenFileName(this,
+        QString::fromUtf8("打开项目"), QString(), QString::fromUtf8("VisionFrame 项目 (*.vfProj)"));
+    if (p.isEmpty())
+        return;
+
+    TaskController::instance().StopAllTasks();
+    applyMode(true);
+    m_editorScene->setGraph(nullptr);
+
+    if (ProjectConfig::instance().loadProject(p)) {
+        m_projectFilePath = p;
+        ProjectConfig::instance().setProjectName(QFileInfo(p).completeBaseName());
+        refreshTaskCombo();
+        updateWindowTitle();
+    }
+}
+
+void VisionFrame::onSaveProject()
+{
+    QString p = m_projectFilePath;
+    if (p.isEmpty())
+        p = QFileDialog::getSaveFileName(this,
+            QString::fromUtf8("保存项目"), QString(), QString::fromUtf8("VisionFrame 项目 (*.vfProj)"));
+    if (p.isEmpty())
+        return;
+
+    if (ProjectConfig::instance().saveProject(p)) {
+        m_projectFilePath = p;
+        ProjectConfig::instance().setProjectName(QFileInfo(p).completeBaseName());
+        updateWindowTitle();
+    }
 }

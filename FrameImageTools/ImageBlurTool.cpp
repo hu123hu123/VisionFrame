@@ -1,5 +1,7 @@
 #include "ImageBlurTool.h"
 #include <opencv2/opencv.hpp>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 ImageBlurTool::ImageBlurTool() = default;
 ImageBlurTool::~ImageBlurTool() = default;
@@ -60,6 +62,19 @@ void ImageBlurTool::LoadParam(std::string strFilePath)
 void ImageBlurTool::SaveParam(std::string strFilePath)
 {
     (void)strFilePath;
+}
+
+std::string ImageBlurTool::SaveParamsToJson() const
+{
+    QJsonObject o;
+    o["kernelSize"] = m_kernelSize;
+    return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString();
+}
+
+void ImageBlurTool::LoadParamsFromJson(const std::string& json)
+{
+    QJsonObject o = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    m_kernelSize = o["kernelSize"].toInt(m_kernelSize);
 }
 
 int ImageBlurTool::kernelSize() const

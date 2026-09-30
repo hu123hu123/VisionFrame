@@ -17,6 +17,9 @@ public:
     void SaveParam(std::string strFilePath) override;
     void GetPorts(std::vector<FPort>& ports) const override;
 
+    std::string SaveParamsToJson() const override;
+    void LoadParamsFromJson(const std::string& json) override;
+
     bool hasTemplate() const { return !m_template.empty(); }
     const cv::Mat& templateImage() const { return m_template; }
     void setTemplate(const cv::Mat& t) { m_template = t.empty() ? cv::Mat() : t.clone(); }

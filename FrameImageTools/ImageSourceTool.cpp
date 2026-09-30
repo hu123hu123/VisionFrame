@@ -1,5 +1,7 @@
 #include "ImageSourceTool.h"
 #include <opencv2/opencv.hpp>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 ImageSourceTool::ImageSourceTool() = default;
 ImageSourceTool::~ImageSourceTool() = default;
@@ -46,6 +48,19 @@ void ImageSourceTool::LoadParam(std::string strFilePath)
 void ImageSourceTool::SaveParam(std::string strFilePath)
 {
     (void)strFilePath;
+}
+
+std::string ImageSourceTool::SaveParamsToJson() const
+{
+    QJsonObject o;
+    o["imagePath"] = QString::fromStdString(m_imagePath);
+    return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString();
+}
+
+void ImageSourceTool::LoadParamsFromJson(const std::string& json)
+{
+    QJsonObject o = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    m_imagePath = o["imagePath"].toString().toStdString();
 }
 
 std::string ImageSourceTool::imagePath() const

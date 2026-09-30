@@ -30,16 +30,24 @@ private slots:
     void onToolDropped(const QString& typeId, const QPointF& scenePos);
     void onNodeEditRequested(const QString& nodeId);
     void onHighlightTick();
+    void onOpenProject();
+    void onSaveProject();
+    void onNewProject();
+    void onTaskRename();
 
 private:
     void applyMode(bool editMode);
     void bindToTask(TaskItem* task);
-    void refreshTaskCombo();
-    void addTaskInternal(const QString& name);
+    void refreshTaskCombo(TaskItem* selectTask = nullptr);
+    TaskItem* addTaskInternal(const QString& name);
     QVector<TaskItem*> allTasks() const;
+    void updateWindowTitle();
+    QString uniqueTaskName(const QString& base) const;
 
     Ui::VisionFrame* ui{ nullptr };
     NodeEditorScene*  m_editorScene{ nullptr };
     QTimer*           m_highlightTimer{ nullptr };
     TaskItem*         m_currentTask{ nullptr };
+    QString           m_projectFilePath;
+    bool              m_running{ false };
 };

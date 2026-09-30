@@ -1,4 +1,5 @@
 #include "TaskGraph.h"
+#include <QJsonDocument>
 #include <QHash>
 #include <QQueue>
 #include <QUuid>
@@ -164,6 +165,16 @@ QJsonObject TaskGraph::toJson() const
         o["title"] = n.title;
         o["x"] = n.pos.x();
         o["y"] = n.pos.y();
+        if (n.tool)
+        {
+            const std::string ps = n.tool->SaveParamsToJson();
+            if (!ps.empty())
+            {
+                QJsonDocument d = QJsonDocument::fromJson(QByteArray::fromStdString(ps));
+                if (d.isObject())
+                    o["params"] = d.object();
+            }
+        }
         na.append(o);
     }
     QJsonArray ea;
@@ -199,6 +210,12 @@ void TaskGraph::fromJson(const QJsonObject& obj, const std::function<FrameToolBa
         n.pos = QPointF(o["x"].toDouble(), o["y"].toDouble());
         if (factory)
             n.tool = factory(n.toolTypeId);
+        const QJsonObject po = o["params"].toObject();
+        if (!po.isEmpty() && n.tool)
+        {
+            const std::string ps = QJsonDocument(po).toJson(QJsonDocument::Compact).toStdString();
+            n.tool->LoadParamsFromJson(ps);
+        }
         nodes.append(n);
     }
     const QJsonArray ea = obj["edges"].toArray();

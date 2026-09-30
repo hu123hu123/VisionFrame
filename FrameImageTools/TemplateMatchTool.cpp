@@ -1,4 +1,8 @@
 #include "TemplateMatchTool.h"
+#include <opencv2/imgcodecs.hpp>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QByteArray>
 
 TemplateMatchTool::TemplateMatchTool() = default;
 TemplateMatchTool::~TemplateMatchTool() = default;
@@ -32,13 +36,13 @@ void TemplateMatchTool::GetPorts(std::vector<FPort>& ports) const
 
     FPort outX;
     outX.name = "X";
-    outX.type = PinType::Int;
+    outX.type = PinType::Double;
     outX.isInput = false;
     ports.push_back(outX);
 
     FPort outY;
     outY.name = "Y";
-    outY.type = PinType::Int;
+    outY.type = PinType::Double;
     outY.isInput = false;
     ports.push_back(outY);
 
@@ -101,8 +105,8 @@ ToolResult TemplateMatchTool::execute(const std::map<std::string, NodeData>& in,
 
     out["OutputImage"] = vis;
     out["Score"] = score;
-    out["X"] = loc.x;
-    out["Y"] = loc.y;
+    out["X"] = static_cast<double>(loc.x);
+    out["Y"] = static_cast<double>(loc.y);
     out["Found"] = found;
     return ToolResult::ToolOk;
 }
@@ -115,4 +119,41 @@ void TemplateMatchTool::LoadParam(std::string strFilePath)
 void TemplateMatchTool::SaveParam(std::string strFilePath)
 {
     (void)strFilePath;
+}
+
+std::string TemplateMatchTool::SaveParamsToJson() const
+{
+    QJsonObject o;
+    o["method"] = m_method;
+    o["threshold"] = m_threshold;
+    if (!m_template.empty())
+    {
+        std::vector<uchar> buf;
+        cv::imencode(".png", m_template, buf);
+        QByteArray data(reinterpret_cast<const char*>(buf.data()), static_cast<int>(buf.size()));
+        o["template"] = QString::fromLatin1(data.toBase64());
+    }
+    else
+    {
+        o["template"] = QString();
+    }
+    return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString();
+}
+
+void TemplateMatchTool::LoadParamsFromJson(const std::string& json)
+{
+    QJsonObject o = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    m_method = o["method"].toInt(m_method);
+    m_threshold = o["threshold"].toDouble(m_threshold);
+    const QByteArray b64 = o["template"].toString().toLatin1();
+    if (!b64.isEmpty())
+    {
+        QByteArray raw = QByteArray::fromBase64(b64);
+        std::vector<uchar> buf(raw.begin(), raw.end());
+        m_template = cv::imdecode(buf, cv::IMREAD_COLOR);
+    }
+    else
+    {
+        m_template = cv::Mat();
+    }
 }

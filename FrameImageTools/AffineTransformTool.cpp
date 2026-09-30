@@ -1,4 +1,6 @@
 #include "AffineTransformTool.h"
+#include <QJsonDocument>
+#include <QJsonObject>
 
 AffineTransformTool::AffineTransformTool() = default;
 AffineTransformTool::~AffineTransformTool() = default;
@@ -88,4 +90,25 @@ void AffineTransformTool::LoadParam(std::string strFilePath)
 void AffineTransformTool::SaveParam(std::string strFilePath)
 {
     (void)strFilePath;
+}
+
+std::string AffineTransformTool::SaveParamsToJson() const
+{
+    QJsonObject o;
+    o["angle"] = m_angle;
+    o["scale"] = m_scale;
+    o["transX"] = m_transX;
+    o["transY"] = m_transY;
+    o["interpolation"] = m_interpolation;
+    return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString();
+}
+
+void AffineTransformTool::LoadParamsFromJson(const std::string& json)
+{
+    QJsonObject o = QJsonDocument::fromJson(QByteArray::fromStdString(json)).object();
+    m_angle = o["angle"].toDouble(m_angle);
+    m_scale = o["scale"].toDouble(m_scale);
+    m_transX = o["transX"].toDouble(m_transX);
+    m_transY = o["transY"].toDouble(m_transY);
+    m_interpolation = o["interpolation"].toInt(m_interpolation);
 }

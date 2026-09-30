@@ -50,6 +50,11 @@ public:
 	// 声明节点端口（蓝图式引脚）。默认返回空（既有队列工具无引脚）。
 	virtual void GetPorts(std::vector<FPort>& ports) const { (void)ports; }
 
+	// 参数序列化：返回 JSON 文本（空串表示无参数），供项目保存/加载。
+	// 基础库不依赖 Qt，故用 std::string 承载；具体工具库用 QJsonDocument 实现。
+	virtual std::string SaveParamsToJson() const { return std::string(); }
+	virtual void LoadParamsFromJson(const std::string& json) { (void)json; }
+
 	// 数据流执行：按端口名接收输入、写出输出。默认回退到无参 execute()，
 	// 以兼容不声明引脚的历史工具。
 	virtual ToolResult execute(const std::map<std::string, NodeData>& in,

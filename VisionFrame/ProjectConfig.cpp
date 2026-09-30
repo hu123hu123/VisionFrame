@@ -2,6 +2,10 @@
 #include <QMetaProperty>
 #include <QVariantMap>
 #include <QFileInfo>   // 文件信息头文件
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include "NodeEditor/ToolFactory.h"
 
 void ProjectConfig::serialize(QDataStream& out) const
 {
@@ -90,4 +94,66 @@ void ProjectConfig::saveConfig(const QString& configFilePath) const
 
     file.close();
     qDebug() << "Config saved to" << filePath;
+}
+
+QString ProjectConfig::normPath(QString p) const
+{
+    if (QFileInfo(p).suffix().isEmpty())
+        p += QString(".%1").arg(m_prefix);
+    return p;
+}
+
+bool ProjectConfig::saveProject(const QString& filePath) const
+{
+    QJsonObject root;
+    root["version"] = 1;
+    root["projectName"] = m_projectName;
+
+    QJsonArray arr;
+    for (TaskItem* t : taskItems)
+    {
+        QJsonObject to;
+        to["taskName"] = t->taskName();
+        to["graph"] = t->graph().toJson();
+        arr.append(to);
+    }
+    root["tasks"] = arr;
+
+    QFile f(normPath(filePath));
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+    QJsonDocument doc(root);
+    f.write(doc.toJson(QJsonDocument::Indented));   // 稳定后改为 doc.toBinaryData()
+    return true;
+}
+
+bool ProjectConfig::loadProject(const QString& filePath)
+{
+    QFile f(normPath(filePath));
+    if (!f.open(QIODevice::ReadOnly))
+        return false;
+    QJsonDocument doc = QJsonDocument::fromJson(f.readAll());  // 稳定后改为 fromBinaryData
+    if (!doc.isObject())
+        return false;
+    const QJsonObject root = doc.object();
+
+    for (TaskItem* t : taskItems)
+    {
+        t->StopTask();
+        delete t;
+    }
+    taskItems.clear();
+
+    m_projectName = root["projectName"].toString();
+    const QJsonArray arr = root["tasks"].toArray();
+    for (const QJsonValue& v : arr)
+    {
+        const QJsonObject to = v.toObject();
+        auto* t = new TaskItem();
+        t->setTaskName(to["taskName"].toString(QStringLiteral("Task")));
+        t->graph().fromJson(to["graph"].toObject(),
+            [&](const QString& tid) { return ToolFactory::instance().create(tid); });
+        taskItems.append(t);
+    }
+    return true;
 }

@@ -17,6 +17,9 @@ public:
     void SaveParam(std::string strFilePath) override;
     void GetPorts(std::vector<FPort>& ports) const override;
 
+    std::string SaveParamsToJson() const override;
+    void LoadParamsFromJson(const std::string& json) override;
+
     double angle() const { return m_angle; }
     void   setAngle(double a) { m_angle = a; }
     double scale() const { return m_scale; }

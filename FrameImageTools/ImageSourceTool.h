@@ -16,6 +16,9 @@ public:
     void SaveParam(std::string strFilePath) override;
     void GetPorts(std::vector<FPort>& ports) const override;
 
+    std::string SaveParamsToJson() const override;
+    void LoadParamsFromJson(const std::string& json) override;
+
     std::string imagePath() const;
     void setImagePath(const std::string& path);
 

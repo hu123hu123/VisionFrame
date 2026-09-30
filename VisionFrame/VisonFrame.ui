@@ -65,8 +65,13 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionEdit"/>
-   <addaction name="actionRunMode"/>
+   <addaction name="actionNewProject"/>
+   <addaction name="actionOpenProject"/>
+   <addaction name="actionSaveProject"/>
+   <addaction name="separator"/>
+   <addaction name="actionTogglePalette"/>
+   <addaction name="actionToggleEditor"/>
+   <addaction name="actionToggleDisplay"/>
    <addaction name="separator"/>
    <widget class="QLabel" name="labelTask">
     <property name="text">
@@ -87,9 +92,32 @@
    <addaction name="actionRun"/>
    <addaction name="actionStop"/>
    <addaction name="actionStep"/>
-   <addaction name="separator"/>
   </widget>
-  <action name="actionEdit">
+  <action name="actionNewProject">
+   <property name="text">
+    <string>新建</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionOpenProject">
+   <property name="text">
+    <string>打开</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSaveProject">
+   <property name="text">
+    <string>保存</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionTogglePalette">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -97,15 +125,38 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>编辑</string>
+    <string>工具</string>
+   </property>
+   <property name="toolTip">
+    <string>显示/隐藏工具页</string>
    </property>
   </action>
-  <action name="actionRunMode">
+  <action name="actionToggleEditor">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>运行</string>
+    <string>蓝图</string>
+   </property>
+   <property name="toolTip">
+    <string>显示/隐藏蓝图页</string>
+   </property>
+  </action>
+  <action name="actionToggleDisplay">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>显示</string>
+   </property>
+   <property name="toolTip">
+    <string>显示/隐藏图像显示页</string>
    </property>
   </action>
   <action name="actionAddTask">

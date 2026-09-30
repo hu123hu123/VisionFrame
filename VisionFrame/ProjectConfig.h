@@ -30,6 +30,9 @@ public:
     void loadConfig(const QString& configFilePath);   // 从文件加载配置
     void saveConfig(const QString& configFilePath) const; // 保存为配置文件
 
+    bool saveProject(const QString& filePath) const;  // 项目保存（JSON，预留二进制切换）
+    bool loadProject(const QString& filePath);        // 项目加载
+
 private:
     ProjectConfig(QObject* parent = nullptr) : QObject(parent) {
         // 注意：不传递无效 parent，保证安全
@@ -41,6 +44,7 @@ private:
 
     void serialize(QDataStream& out) const;
     void deserialize(QDataStream& in);
+    QString normPath(QString p) const;
 
 private:
     QString m_projectName;
