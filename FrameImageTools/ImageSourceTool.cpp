@@ -13,7 +13,7 @@ void ImageSourceTool::GetPorts(std::vector<FPort>& ports) const
 {
     ports.clear();
     FPort out;
-    out.name = "Image";
+    out.name = "OutputImage";
     out.type = PinType::Image;
     out.isInput = false;
     ports.push_back(out);
@@ -34,7 +34,7 @@ ToolResult ImageSourceTool::execute(const std::map<std::string, NodeData>& in, s
     cv::Mat img = cv::imread(m_imagePath, cv::IMREAD_COLOR);
     if (img.empty())
         return ToolResult::ToolError;
-    out["Image"] = img;
+    out["OutputImage"] = img;
     return ToolResult::ToolOk;
 }
 

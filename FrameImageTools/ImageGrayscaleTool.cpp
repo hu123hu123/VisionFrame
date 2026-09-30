@@ -13,12 +13,12 @@ void ImageGrayscaleTool::GetPorts(std::vector<FPort>& ports) const
 {
     ports.clear();
     FPort in;
-    in.name = "Image";
+    in.name = "InputImage";
     in.type = PinType::Image;
     in.isInput = true;
     ports.push_back(in);
     FPort out;
-    out.name = "Image";
+    out.name = "OutputImage";
     out.type = PinType::Image;
     out.isInput = false;
     ports.push_back(out);
@@ -33,7 +33,7 @@ ToolResult ImageGrayscaleTool::execute()
 ToolResult ImageGrayscaleTool::execute(const std::map<std::string, NodeData>& in, std::map<std::string, NodeData>& out)
 {
     out.clear();
-    auto it = in.find("Image");
+    auto it = in.find("InputImage");
     if (it == in.end())
         return ToolResult::ToolError;
     const cv::Mat* src = std::any_cast<cv::Mat>(&it->second);
@@ -42,7 +42,7 @@ ToolResult ImageGrayscaleTool::execute(const std::map<std::string, NodeData>& in
 
     cv::Mat dst;
     cv::cvtColor(*src, dst, cv::COLOR_BGR2GRAY);
-    out["Image"] = dst;
+    out["OutputImage"] = dst;
     return ToolResult::ToolOk;
 }
 

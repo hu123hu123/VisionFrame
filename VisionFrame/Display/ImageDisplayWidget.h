@@ -3,17 +3,19 @@
 #include <QWidget>
 #include <QVector>
 
-class QComboBox;
 class QTimer;
 class TaskItem;
-class ImageView;
+
+namespace Ui { class ImageDisplayWidget; }
 
 // 图像显示面板：任务 -> 工具 -> 图片输出 三级下拉选择并渲染 cv::Mat。
+// 选择区（三下拉）可经顶部按钮隐藏，隐藏后图像区占满面板。
 class ImageDisplayWidget : public QWidget
 {
     Q_OBJECT
 public:
     explicit ImageDisplayWidget(QWidget* parent = nullptr);
+    ~ImageDisplayWidget() override;
 
     void setTasks(const QVector<TaskItem*>& tasks);
     void refreshTasks(const QVector<TaskItem*>& tasks, TaskItem* current = nullptr);
@@ -29,10 +31,7 @@ private:
     void rebuildOutputCombo();
     void reloadPixmap();
 
-    QComboBox* m_taskCombo{ nullptr };
-    QComboBox* m_toolCombo{ nullptr };
-    QComboBox* m_outputCombo{ nullptr };
+    Ui::ImageDisplayWidget* ui{ nullptr };
     QTimer* m_timer{ nullptr };
     QVector<TaskItem*> m_tasks;
-    ImageView* m_view{ nullptr };
 };

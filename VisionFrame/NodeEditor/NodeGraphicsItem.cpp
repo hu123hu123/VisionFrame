@@ -3,6 +3,7 @@
 #include "NodeEditor/Style.h"
 #include "NodeEditor/ToolFactory.h"
 #include <QPainter>
+#include <QFontMetrics>
 #include <QGraphicsSceneMouseEvent>
 
 NodeGraphicsItem::NodeGraphicsItem(GraphNodeData* node, QGraphicsItem* parent)
@@ -12,6 +13,7 @@ NodeGraphicsItem::NodeGraphicsItem(GraphNodeData* node, QGraphicsItem* parent)
     setFlag(ItemIsSelectable, true);
     setFlag(ItemSendsGeometryChanges, true);
 
+    QString title;
     if (node && node->tool)
     {
         std::vector<FPort> ports;
@@ -25,10 +27,35 @@ NodeGraphicsItem::NodeGraphicsItem(GraphNodeData* node, QGraphicsItem* parent)
         }
         const ToolEntry* e = ToolFactory::instance().find(node->toolTypeId);
         m_category = e ? e->category : QString();
+        title = node->title;
     }
+
+    m_width = computeBodyWidth(title);
 
     setPos(node ? node->pos : QPointF());
     layoutPins();
+}
+
+double NodeGraphicsItem::computeBodyWidth(const QString& title) const
+{
+    const QFontMetrics fm{ QFont() };
+    QFont bold = QFont();
+    bold.setBold(true);
+    const QFontMetrics bfm{ bold };
+
+    double maxIn = 0.0;
+    for (const auto& p : m_inputs)
+        maxIn = qMax(maxIn, double(fm.horizontalAdvance(QString::fromStdString(p.name))));
+    double maxOut = 0.0;
+    for (const auto& p : m_outputs)
+        maxOut = qMax(maxOut, double(fm.horizontalAdvance(QString::fromStdString(p.name))));
+
+    // 左右两栏，分别保证最长的输入/输出引脚名有足够空间，并额外留余量避免贴边。
+    double w = 2.0 * maxIn + 48.0;
+    w = qMax(w, 2.0 * maxOut + 40.0);
+    w = qMax(w, double(bfm.horizontalAdvance(title)) + 32.0);
+    w = qMax(w, 160.0);
+    return w;
 }
 
 void NodeGraphicsItem::setRunState(NodeRunState s)

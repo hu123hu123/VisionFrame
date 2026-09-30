@@ -4,6 +4,10 @@
 #include "ImageBlurTool.h"
 #include "ImageBlurToolWidget.h"
 #include "ImageGrayscaleTool.h"
+#include "TemplateMatchTool.h"
+#include "TemplateMatchToolWidget.h"
+#include "AffineTransformTool.h"
+#include "AffineTransformToolWidget.h"
 #include <QObject>
 
 ToolFactory& ToolFactory::instance()
@@ -92,4 +96,51 @@ void registerBuiltinTools()
     gray.create = []() -> FrameToolBase* { return new ImageGrayscaleTool(); };
     gray.createWidget = nullptr;
     f.registerTool(gray);
+
+    ToolEntry match;
+    match.typeId = "TemplateMatchTool";
+    match.displayName = QString::fromUtf8("模板匹配");
+    match.category = QString::fromUtf8("图像处理");
+    match.create = []() -> FrameToolBase* { return new TemplateMatchTool(); };
+    match.createWidget = [](FrameToolBase* t) -> class QWidget* {
+        auto* tool = static_cast<TemplateMatchTool*>(t);
+        auto* w = new TemplateMatchToolWidget();
+        w->setMethod(tool->method());
+        w->setThreshold(tool->threshold());
+        if (tool->hasTemplate())
+            w->setTemplate(tool->templateImage());
+        QObject::connect(w, &TemplateMatchToolWidget::methodChanged, w,
+            [tool](int m) { tool->setMethod(m); });
+        QObject::connect(w, &TemplateMatchToolWidget::thresholdChanged, w,
+            [tool](double v) { tool->setThreshold(v); });
+        QObject::connect(w, &TemplateMatchToolWidget::templateTrained, w,
+            [tool](const cv::Mat& tpl) { tool->setTemplate(tpl); });
+        return w;
+    };
+    f.registerTool(match);
+
+    ToolEntry affine;
+    affine.typeId = "AffineTransformTool";
+    affine.displayName = QString::fromUtf8("仿射变换");
+    affine.category = QString::fromUtf8("图像处理");
+    affine.create = []() -> FrameToolBase* { return new AffineTransformTool(); };
+    affine.createWidget = [](FrameToolBase* t) -> class QWidget* {
+        auto* tool = static_cast<AffineTransformTool*>(t);
+        auto* w = new AffineTransformToolWidget();
+        w->setAngle(tool->angle());
+        w->setScale(tool->scale());
+        w->setTransX(tool->transX());
+        w->setTransY(tool->transY());
+        w->setInterpolation(tool->interpolation());
+        QObject::connect(w, &AffineTransformToolWidget::changed, w,
+            [tool, w]() {
+                tool->setAngle(w->angle());
+                tool->setScale(w->scale());
+                tool->setTransX(w->transX());
+                tool->setTransY(w->transY());
+                tool->setInterpolation(w->interpolation());
+            });
+        return w;
+    };
+    f.registerTool(affine);
 }

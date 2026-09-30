@@ -20,6 +20,7 @@ add_executable(VisionFrame WIN32
     NodeEditor/ToolPaletteWidget.cpp NodeEditor/ToolPaletteWidget.h
     NodeEditor/ToolFactory.cpp NodeEditor/ToolFactory.h
     Display/ImageDisplayWidget.cpp Display/ImageDisplayWidget.h
+    Display/ImageDisplayWidget.ui
 )
 
 target_compile_definitions(VisionFrame PRIVATE
@@ -30,6 +31,7 @@ target_compile_definitions(VisionFrame PRIVATE
 target_include_directories(VisionFrame PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}           # 使 Graph/、NodeEditor/、Display/ 相对包含可解析
     ${CMAKE_SOURCE_DIR}/FrameQueueTool    # 引用静态库内部头（FrameEnQueueTool.h 等）
+    ${CMAKE_SOURCE_DIR}/FrameImageView    # 引用 ImageViewWidget.h 等对外头
     ${VF_INCLUDE_DIR}                     # 引用 Include/include 中的对外头
     ${OpenCV_INCLUDE_DIRS}
 )
@@ -40,6 +42,7 @@ target_link_directories(VisionFrame PRIVATE ${VF_LIB_DIR})
 target_link_libraries(VisionFrame PRIVATE
     FarmeToolBase
     FrameCameraBase
+    FrameImageView
     FrameQueueTool
     FrameImageTools
     Qt5::Core Qt5::Gui Qt5::Widgets
@@ -56,6 +59,9 @@ set_target_properties(VisionFrame PROPERTIES
 # 业务 DLL 延迟加载：不在启动时解析导入表，而在首次调用时加载
 # 这样 main() 中的 SetDllDirectoryW("...\Bin") 先执行，延迟加载的业务 DLL
 # 就能从 App/Bin/ 找到，不需要拷贝到 exe 同级目录
+# 业务 DLL 延迟加载。注意：FrameImageView.dll 含 Q_OBJECT 的 widget，其 staticMetaObject
+# 是数据符号，MSVC 无法对数据符号做延迟加载（LNK1194），故 FrameImageView 改为普通链接
+# 并随 exe 一起放在 App/ 下（见下方 POST_BUILD 拷贝）。
 if(MSVC)
     target_link_options(VisionFrame PRIVATE
         /DELAYLOAD:FrameToolBase.dll
@@ -98,5 +104,7 @@ add_custom_command(TARGET VisionFrame POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${QT_PLUGINS}/${_dll_qt_platform}" "$<TARGET_FILE_DIR:VisionFrame>/platforms/${_dll_qt_platform}"
     # OpenCV
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENCV_BIN}/${_dll_opencv}"     "$<TARGET_FILE_DIR:VisionFrame>/${_dll_opencv}"
+    # FrameImageView.dll（含 Q_OBJECT，无法延迟加载，需随 exe 放置）
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameImageView>"   "$<TARGET_FILE_DIR:VisionFrame>/FrameImageView.dll"
     COMMENT "Copy third-party runtime DLLs to exe directory"
 )

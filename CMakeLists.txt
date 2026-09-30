@@ -106,6 +106,7 @@ file(MAKE_DIRECTORY "${VF_BIN_DIR}")
 
 add_subdirectory(FarmeToolBase)
 add_subdirectory(FrameCameraBase)
+add_subdirectory(FrameImageView)
 add_subdirectory(FrameQueueTool)
 add_subdirectory(FrameImageTools)
 add_subdirectory(VisionFrame)

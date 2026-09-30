@@ -40,6 +40,7 @@ protected:
 private:
     void layoutPins();
     QRectF bodyRect() const;
+    double computeBodyWidth(const QString& title) const;
 
     GraphNodeData* m_node;
     QString m_id;
