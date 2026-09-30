@@ -23,8 +23,7 @@ private slots:
     void onAddTask();
     void onRemoveTask();
     void onTaskSelectionChanged(int idx);
-    void onStartRun();
-    void onStopRun();
+    void onRunToggle();
     void onStepRun();
     void onToolActivated(const QString& typeId);
     void onToolDropped(const QString& typeId, const QPointF& scenePos);

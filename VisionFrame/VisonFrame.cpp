@@ -12,6 +12,7 @@
 #include "GlobalConfig.h"
 
 #include <QToolBar>
+#include <QToolButton>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPushButton>
@@ -19,6 +20,8 @@
 #include <QDockWidget>
 #include <QDialog>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QMenu>
 #include <QMessageBox>
 #include <QTimer>
 #include <QFileDialog>
@@ -28,11 +31,6 @@ VisionFrame::VisionFrame(QWidget* parent)
     : QMainWindow(parent), ui(new Ui::VisionFrame)
 {
     ui->setupUi(this);
-
-    // 隐藏各 dock 标题栏，页面切换交由工具栏分组按钮控制
-    ui->m_paletteDock->setTitleBarWidget(new QWidget());
-    ui->m_editorDock->setTitleBarWidget(new QWidget());
-    ui->m_displayDock->setTitleBarWidget(new QWidget());
 
     // 蓝图场景与视图绑定
     m_editorScene = new NodeEditorScene(this);
@@ -46,6 +44,27 @@ VisionFrame::VisionFrame(QWidget* parent)
     connect(ui->actionTogglePalette, &QAction::toggled, ui->m_paletteDock, &QDockWidget::setVisible);
     connect(ui->actionToggleEditor, &QAction::toggled, ui->m_editorDock, &QDockWidget::setVisible);
     connect(ui->actionToggleDisplay, &QAction::toggled, ui->m_displayDock, &QDockWidget::setVisible);
+
+    // 设置 / 布局管理 下拉菜单
+    auto* settingsMenu = new QMenu(this);
+    settingsMenu->addAction(ui->actionNewProject);
+    settingsMenu->addAction(ui->actionOpenProject);
+    settingsMenu->addAction(ui->actionSaveProject);
+    ui->m_settingsBtn->setMenu(settingsMenu);
+
+    auto* layoutMenu = new QMenu(this);
+    layoutMenu->addAction(ui->actionTogglePalette);
+    layoutMenu->addAction(ui->actionToggleEditor);
+    layoutMenu->addAction(ui->actionToggleDisplay);
+    ui->m_layoutBtn->setMenu(layoutMenu);
+
+    // 标题栏下方：项目功能块（弹簧 + 运行/停止大按钮，定义在 VisonFrame.ui 的 m_runBar）
+    connect(ui->m_runToggleBtn, &QPushButton::clicked, this, &VisionFrame::onRunToggle);
+
+    // 蓝图顶部任务行按钮绑定到既有 action（自动跟随 applyMode 启用状态）
+    ui->m_addTaskBtn->setDefaultAction(ui->actionAddTask);
+    ui->m_delTaskBtn->setDefaultAction(ui->actionDelTask);
+    ui->m_stepBtn->setDefaultAction(ui->actionStep);
 
     // 文件操作
     connect(ui->actionNewProject, &QAction::triggered, this, &VisionFrame::onNewProject);
@@ -61,8 +80,6 @@ VisionFrame::VisionFrame(QWidget* parent)
     connect(ui->m_taskCombo->lineEdit(), &QLineEdit::editingFinished, this, &VisionFrame::onTaskRename);
 
     // 运行控制
-    connect(ui->actionRun, &QAction::triggered, this, &VisionFrame::onStartRun);
-    connect(ui->actionStop, &QAction::triggered, this, &VisionFrame::onStopRun);
     connect(ui->actionStep, &QAction::triggered, this, &VisionFrame::onStepRun);
 
     connect(ui->m_palette, &ToolPaletteWidget::toolActivated, this, &VisionFrame::onToolActivated);
@@ -103,9 +120,8 @@ void VisionFrame::applyMode(bool editMode)
     ui->actionNewProject->setEnabled(editMode);
     ui->actionOpenProject->setEnabled(editMode);
     ui->actionSaveProject->setEnabled(editMode);
-    ui->actionRun->setEnabled(editMode);
-    ui->actionStop->setEnabled(!editMode);
     ui->actionStep->setEnabled(editMode);
+    ui->m_runToggleBtn->setText(editMode ? QString::fromUtf8("运行") : QString::fromUtf8("停止"));
 }
 
 QVector<TaskItem*> VisionFrame::allTasks() const
@@ -234,15 +250,12 @@ void VisionFrame::onTaskRename()
     ui->m_display->refreshTasks(allTasks(), m_currentTask);
 }
 
-void VisionFrame::onStartRun()
+void VisionFrame::onRunToggle()
 {
-    if (m_currentTask)
-        m_currentTask->StartTask();
-}
-
-void VisionFrame::onStopRun()
-{
-    TaskController::instance().StopAllTasks();
+    if (m_running)
+        TaskController::instance().StopAllTasks();
+    else
+        TaskController::instance().StartAllTasks();
 }
 
 void VisionFrame::onStepRun()
