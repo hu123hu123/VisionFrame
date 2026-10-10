@@ -75,6 +75,15 @@ public:
 	// 线程安全读取各节点运行态（执行中=绿 / 成功复原 / 失败=红）。
 	QHash<QString, NodeRunState> nodeRunStates() const;
 
+	// 工具运行态快照（供“运行状态”面板）：每个元素对应一个工具的名称与当前状态。
+	struct ToolRunState
+	{
+		QString      name;
+		NodeRunState state{ NodeRunState::Idle };
+	};
+	// 线程安全读取各工具运行态（图路径取节点，线性路径取 m_tools）。
+	QVector<ToolRunState> toolRunStates() const;
+
 	int     frameCounter() const;
 	QString currentNodeId() const;
 	void    setFrameIntervalMs(int ms);
@@ -99,6 +108,7 @@ private:
 	std::atomic<int>                          m_frameCounter{ 0 };
 	QString                                   m_currentNodeId; // 运行态高亮节点
 	QHash<QString, NodeRunState>              m_nodeStates;    // 各节点运行态
+	QHash<FrameToolBase*, NodeRunState>       m_toolStates;    // 线性路径各工具运行态
 	std::atomic<int>                          m_frameIntervalMs{ 33 };
 };
 

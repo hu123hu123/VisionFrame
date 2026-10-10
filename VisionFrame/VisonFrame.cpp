@@ -6,6 +6,8 @@
 #include "NodeEditor/ToolPaletteWidget.h"
 #include "NodeEditor/ToolFactory.h"
 #include "Display/ImageDisplayWidget.h"
+#include "Log/LogPanelWidget.h"
+#include "TaskStatusPanel.h"
 
 #include "TaskItem.h"
 #include "TaskController.h"
@@ -32,6 +34,10 @@ VisionFrame::VisionFrame(QWidget* parent)
 {
     ui->setupUi(this);
 
+    // centralwidget 仅用于让 Designer 具备合法落点、稳定 dock 布局（规避点击 DockWidget 闪退），
+    // 运行时移除，恢复纯停靠布局
+    setCentralWidget(nullptr);
+
     // 蓝图场景与视图绑定
     m_editorScene = new NodeEditorScene(this);
     ui->m_editorView->setScene(m_editorScene);
@@ -39,6 +45,9 @@ VisionFrame::VisionFrame(QWidget* parent)
     // 编辑器与图像显示左右分栏
     splitDockWidget(ui->m_editorDock, ui->m_displayDock, Qt::Horizontal);
     resizeDocks({ ui->m_editorDock, ui->m_displayDock }, { 640, 360 }, Qt::Horizontal);
+
+    // 允许 dock 嵌套：单个停靠区可沿任意方向拆分，横/竖布局互转更顺手
+    setDockNestingEnabled(true);
 
     // 页面分组切换
     connect(ui->actionTogglePalette, &QAction::toggled, ui->m_paletteDock, &QDockWidget::setVisible);
@@ -57,6 +66,42 @@ VisionFrame::VisionFrame(QWidget* parent)
     layoutMenu->addAction(ui->actionToggleEditor);
     layoutMenu->addAction(ui->actionToggleDisplay);
     ui->m_layoutBtn->setMenu(layoutMenu);
+
+    // 日志面板：把 LogPanelWidget 塞进 UI 里已有的 m_logDock，并在布局菜单暴露开关。
+    m_logPanel = new LogPanelWidget(ui->m_logDock);
+    m_logPanel->registerWithLogger();
+    ui->m_logDock->setWidget(m_logPanel);
+    ui->m_logDock->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable);
+
+    m_logToggleAction = new QAction(QString::fromUtf8("日志"), this);
+    m_logToggleAction->setCheckable(true);
+    m_logToggleAction->setChecked(true);
+    connect(m_logToggleAction, &QAction::toggled, ui->m_logDock, &QDockWidget::setVisible);
+    connect(ui->m_logDock, &QDockWidget::visibilityChanged, m_logToggleAction, &QAction::setChecked);
+    layoutMenu->addAction(m_logToggleAction);
+
+    // 运行状态面板：独立 dock，树形展示 任务 -> 工具 -> 状态，随定时器低频刷新。
+    m_statusPanel = new TaskStatusPanel(this);
+    m_statusDock = new QDockWidget(QString::fromUtf8("运行状态"), this);
+    m_statusDock->setObjectName(QStringLiteral("m_statusDock"));
+    m_statusDock->setWidget(m_statusPanel);
+    m_statusDock->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetMovable);
+    addDockWidget(Qt::RightDockWidgetArea, m_statusDock);
+
+    m_statusToggleAction = new QAction(QString::fromUtf8("运行状态"), this);
+    m_statusToggleAction->setCheckable(true);
+    m_statusToggleAction->setChecked(true);
+    connect(m_statusToggleAction, &QAction::toggled, m_statusDock, &QDockWidget::setVisible);
+    connect(m_statusDock, &QDockWidget::visibilityChanged, m_statusToggleAction, &QAction::setChecked);
+    layoutMenu->addAction(m_statusToggleAction);
+
+    m_statusTimer = new QTimer(this);
+    m_statusTimer->setInterval(200);
+    connect(m_statusTimer, &QTimer::timeout, this, [this]() {
+        if (m_statusDock->isVisible())
+            m_statusPanel->refresh(allTasks());
+    });
+    m_statusTimer->start();
 
     // 标题栏下方：项目功能块（弹簧 + 运行/停止大按钮，定义在 VisonFrame.ui 的 m_runBar）
     connect(ui->m_runToggleBtn, &QPushButton::clicked, this, &VisionFrame::onRunToggle);

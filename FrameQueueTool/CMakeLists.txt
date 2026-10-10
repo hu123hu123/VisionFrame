@@ -25,7 +25,7 @@ target_include_directories(FrameQueueTool PUBLIC
     ${CMAKE_SOURCE_DIR}/FarmeToolBase # 直接引用源目录的 FrameToolBase.h（避免依赖 .h 复制步骤）
 )
 
-target_link_libraries(FrameQueueTool PUBLIC Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(FrameQueueTool PUBLIC FrameLog Qt5::Core Qt5::Gui Qt5::Widgets)
 
 set_target_properties(FrameQueueTool PROPERTIES
     OUTPUT_NAME "FrameQueueTool"

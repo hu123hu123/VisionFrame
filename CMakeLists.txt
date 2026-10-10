@@ -105,6 +105,7 @@ file(MAKE_DIRECTORY "${VF_LIB_DIR}")
 file(MAKE_DIRECTORY "${VF_BIN_DIR}")
 
 add_subdirectory(FarmeToolBase)
+add_subdirectory(FrameLog)
 add_subdirectory(FrameCameraBase)
 add_subdirectory(FrameImageView)
 add_subdirectory(FrameQueueTool)

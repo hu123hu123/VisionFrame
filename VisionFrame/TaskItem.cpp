@@ -1,5 +1,6 @@
 ﻿#include "TaskItem.h"
 #include "FrameDataQueueRegistry.h"
+#include "FrameLog.h"
 
 TaskItem::TaskItem(QObject *parent)
 	: QThread(parent)
@@ -15,6 +16,7 @@ TaskItem::~TaskItem()
 void TaskItem::StartTask()
 {
 	m_stop = false;
+	VFL_INFO("task") << "任务[" << m_taskName.toStdString() << "] 启动";
 	if (m_dataQueue)
 		m_dataQueue->reset(); // 清除可能的 stop 标志，允许复用
 	if (!this->isRunning())
@@ -24,6 +26,7 @@ void TaskItem::StartTask()
 void TaskItem::StopTask()
 {
 	m_stop = true;
+	VFL_INFO("task") << "任务[" << m_taskName.toStdString() << "] 停止";
 	// 唤醒所有阻塞在 DeQueueTool::execute() 中的等待者，让线程优雅退出。
 	if (m_dataQueue)
 		m_dataQueue->stop();
@@ -54,12 +57,29 @@ void TaskItem::doTask()
 	}
 	else if (!m_tools.isEmpty())
 	{
+		const std::string tn = m_taskName.toStdString();
 		// 兼容旧线性执行（无图任务）
 		for (FrameToolBase* tool : m_tools)
 		{
 			if (m_stop)
 				return;
-			tool->execute();
+			const std::string name = tool->ToolName();
+			VFL_DEBUG("task") << "任务[" << tn << "] 工具[" << name << "] 进入";
+			{
+				QMutexLocker lock(&m_outputMutex);
+				m_toolStates[tool] = NodeRunState::Running;
+			}
+			const ToolResult r = tool->execute();
+			{
+				QMutexLocker lock(&m_outputMutex);
+				m_toolStates[tool] = (r == ToolResult::ToolOk) ? NodeRunState::Success : NodeRunState::Failed;
+			}
+			if (r == ToolResult::ToolOk)
+				VFL_DEBUG("task") << "任务[" << tn << "] 工具[" << name << "] 结束";
+			else if (r == ToolResult::ToolError)
+				VFL_ERROR("task") << "任务[" << tn << "] 工具[" << name << "] 失败";
+			else
+				VFL_WARN("task") << "任务[" << tn << "] 工具[" << name << "] 中断";
 			if (m_stop)
 				return;
 		}
@@ -80,6 +100,7 @@ void TaskItem::executeGraphOnce()
 		}
 	}
 
+	const std::string tn = m_taskName.toStdString();
 	for (const QString& id : order)
 	{
 		if (m_stop)
@@ -109,6 +130,9 @@ void TaskItem::executeGraphOnce()
 			m_nodeStates[id] = NodeRunState::Running;
 		}
 
+		const std::string name = node->tool->ToolName();
+		VFL_DEBUG("task") << "任务[" << tn << "] 节点[" << id.toStdString() << "] 工具[" << name << "] 进入";
+
 		std::map<std::string, NodeData> outputs;
 		const ToolResult r = node->tool->execute(inputs, outputs);
 
@@ -118,6 +142,13 @@ void TaskItem::executeGraphOnce()
 			m_nodeStates[id] = (r == ToolResult::ToolOk)
 				? NodeRunState::Success : NodeRunState::Failed;
 		}
+
+		if (r == ToolResult::ToolOk)
+			VFL_DEBUG("task") << "任务[" << tn << "] 节点[" << id.toStdString() << "] 工具[" << name << "] 结束";
+		else if (r == ToolResult::ToolError)
+			VFL_ERROR("task") << "任务[" << tn << "] 节点[" << id.toStdString() << "] 工具[" << name << "] 失败";
+		else
+			VFL_WARN("task") << "任务[" << tn << "] 节点[" << id.toStdString() << "] 工具[" << name << "] 中断";
 	}
 	m_frameCounter.fetch_add(1);
 }
@@ -157,6 +188,38 @@ QHash<QString, NodeRunState> TaskItem::nodeRunStates() const
 {
 	QMutexLocker lock(&m_outputMutex);
 	return m_nodeStates;
+}
+
+QVector<TaskItem::ToolRunState> TaskItem::toolRunStates() const
+{
+	QVector<ToolRunState> result;
+	QMutexLocker lock(&m_outputMutex);
+	if (!m_graph.nodes.isEmpty())
+	{
+		for (const auto& n : m_graph.nodes)
+		{
+			ToolRunState ts;
+			if (!n.title.isEmpty())
+				ts.name = n.title;
+			else if (n.tool)
+				ts.name = QString::fromStdString(n.tool->ToolName());
+			else
+				ts.name = n.id;
+			ts.state = m_nodeStates.value(n.id, NodeRunState::Idle);
+			result.append(ts);
+		}
+	}
+	else
+	{
+		for (FrameToolBase* tool : m_tools)
+		{
+			ToolRunState ts;
+			ts.name = QString::fromStdString(tool->ToolName());
+			ts.state = m_toolStates.value(tool, NodeRunState::Idle);
+			result.append(ts);
+		}
+	}
+	return result;
 }
 
 void TaskItem::setFrameIntervalMs(int ms)

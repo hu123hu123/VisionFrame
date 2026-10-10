@@ -26,6 +26,7 @@ target_include_directories(FrameImageTools PUBLIC
 target_link_libraries(FrameImageTools PUBLIC
     FarmeToolBase
     FrameImageView
+    FrameLog
     Qt5::Core Qt5::Gui Qt5::Widgets
     ${OpenCV_LIBS}
 )

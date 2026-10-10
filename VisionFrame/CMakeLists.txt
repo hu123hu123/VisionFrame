@@ -21,6 +21,10 @@ add_executable(VisionFrame WIN32
     NodeEditor/ToolFactory.cpp NodeEditor/ToolFactory.h
     Display/ImageDisplayWidget.cpp Display/ImageDisplayWidget.h
     Display/ImageDisplayWidget.ui
+    Log/QtLogBridge.cpp Log/QtLogBridge.h
+    Log/LogTableModel.cpp Log/LogTableModel.h
+    Log/LogPanelWidget.cpp Log/LogPanelWidget.h
+    TaskStatusPanel.cpp TaskStatusPanel.h
 )
 
 target_compile_definitions(VisionFrame PRIVATE
@@ -45,6 +49,7 @@ target_link_libraries(VisionFrame PRIVATE
     FrameImageView
     FrameQueueTool
     FrameImageTools
+    FrameLog
     Qt5::Core Qt5::Gui Qt5::Widgets
     ${OpenCV_LIBS}
 )
@@ -106,5 +111,7 @@ add_custom_command(TARGET VisionFrame POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENCV_BIN}/${_dll_opencv}"     "$<TARGET_FILE_DIR:VisionFrame>/${_dll_opencv}"
     # FrameImageView.dll（含 Q_OBJECT，无法延迟加载，需随 exe 放置）
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameImageView>"   "$<TARGET_FILE_DIR:VisionFrame>/FrameImageView.dll"
+    # FrameLog.dll（进程级日志单例，exe 隐式链接，需随 exe 放置以便 main() 之前由加载器解析）
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameLog>"         "$<TARGET_FILE_DIR:VisionFrame>/FrameLog.dll"
     COMMENT "Copy third-party runtime DLLs to exe directory"
 )

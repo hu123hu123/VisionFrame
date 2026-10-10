@@ -6,37 +6,47 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>800</height>
+    <width>725</width>
+    <height>440</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>VisionFrame</string>
   </property>
+  <widget class="QWidget" name="centralwidget"/>
   <widget class="QDockWidget" name="m_paletteDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>工具</string>
-   </property>
-   <property name="features">
-    <set>QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable</set>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="ToolPaletteWidget" name="m_palette"/>
+   <widget class="ToolPaletteWidget" name="m_palette">
+    <column>
+     <property name="text">
+      <string notr="true">1</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="m_editorDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>蓝图编辑器</string>
-   </property>
-   <property name="features">
-    <set>QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable</set>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="m_editorContainer">
     <layout class="QVBoxLayout" name="editorRoot">
+     <property name="spacing">
+      <number>4</number>
+     </property>
      <property name="leftMargin">
       <number>4</number>
      </property>
@@ -47,9 +57,6 @@
       <number>4</number>
      </property>
      <property name="bottomMargin">
-      <number>4</number>
-     </property>
-     <property name="spacing">
       <number>4</number>
      </property>
      <item>
@@ -66,17 +73,17 @@
        </item>
        <item>
         <widget class="QComboBox" name="m_taskCombo">
-         <property name="minimumSize">
-          <size>
-           <width>120</width>
-           <height>0</height>
-          </size>
-         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>1</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -132,11 +139,11 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="m_displayDock">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
    <property name="windowTitle">
     <string>图像显示</string>
-   </property>
-   <property name="features">
-    <set>QDockWidget::DockWidgetMovable|QDockWidget::DockWidgetClosable</set>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -240,6 +247,15 @@
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QDockWidget" name="m_logDock">
+   <property name="windowTitle">
+    <string>日志显示</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents"/>
   </widget>
   <action name="actionNewProject">
    <property name="text">

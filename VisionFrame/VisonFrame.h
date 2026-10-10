@@ -4,7 +4,11 @@
 
 class NodeEditorScene;
 class QTimer;
+class QAction;
+class QDockWidget;
 class TaskItem;
+class LogPanelWidget;
+class TaskStatusPanel;
 
 namespace Ui {
 class VisionFrame;
@@ -49,4 +53,12 @@ private:
     TaskItem*         m_currentTask{ nullptr };
     QString           m_projectFilePath;
     bool              m_running{ false };
+
+    LogPanelWidget*   m_logPanel{ nullptr };
+    QAction*          m_logToggleAction{ nullptr };
+
+    TaskStatusPanel*  m_statusPanel{ nullptr };
+    QDockWidget*      m_statusDock{ nullptr };
+    QAction*          m_statusToggleAction{ nullptr };
+    QTimer*           m_statusTimer{ nullptr };
 };
