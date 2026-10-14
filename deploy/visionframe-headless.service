@@ -1,0 +1,23 @@
+# VisionFrame 无头服务 systemd 单元模板（边缘侧部署）
+# 安装：
+#   1. 解压部署包到 /opt/VisionFrame（含 VisionFrame、Bin/、logs/）
+#   2. 把工程文件放到 /opt/VisionFrame/job.vfProj
+#   3. cp visionframe-headless.service /etc/systemd/system/
+#   4. systemctl daemon-reload && systemctl enable --now visionframe-headless
+[Unit]
+Description=VisionFrame headless vision service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/VisionFrame
+ExecStart=/opt/VisionFrame/VisionFrame --headless /opt/VisionFrame/job.vfProj
+Restart=on-failure
+RestartSec=3
+# 崩溃转储交给 systemd-coredump（可选：调大 RLIMIT_CORE）
+LimitCORE=infinity
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

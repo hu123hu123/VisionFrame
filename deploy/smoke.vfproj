@@ -1,0 +1,41 @@
+{
+    "projectName": "smoke",
+    "tasks": [
+        {
+            "taskName": "Smoke",
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "src",
+                        "type": "ImageSourceTool",
+                        "title": "图像源",
+                        "x": 0,
+                        "y": 0,
+                        "params": {
+                            "imagePath": "/tmp/vf_smoke_in.png"
+                        }
+                    },
+                    {
+                        "id": "save",
+                        "type": "ImageSaveTool",
+                        "title": "图像保存",
+                        "x": 300,
+                        "y": 0,
+                        "params": {
+                            "savePath": "/tmp/vf_smoke_out.png"
+                        }
+                    }
+                ],
+                "edges": [
+                    {
+                        "id": "e1",
+                        "fromNode": "src",
+                        "fromPin": "OutputImage",
+                        "toNode": "save",
+                        "toPin": "InputImage"
+                    }
+                ]
+            }
+        }
+    ]
+}

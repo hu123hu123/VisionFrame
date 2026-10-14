@@ -13,8 +13,10 @@
 #include <memory>
 #include <atomic>
 
+#ifdef _MSC_VER
 #pragma comment(lib, "FrameToolBase.lib")
 #pragma comment(lib, "FrameCameraBase.lib")
+#endif
 // FrameQueueTool.lib 通过 VisionFrame.vcxproj 的 ProjectReference 链接，
 // 该 lib 不在 Include\lib 中，故不在此用 #pragma。
 
@@ -71,6 +73,9 @@ public:
 
 	// 线程安全读取某节点最近输出（供图像显示）。
 	bool snapshotNodeOutputs(const QString& nodeId, std::map<std::string, NodeData>& out) const;
+
+	// 释放全部节点输出图像（停止运行后图像不再被引用，避免常驻内存）。
+	void releaseGraphOutputs();
 
 	// 线程安全读取各节点运行态（执行中=绿 / 成功复原 / 失败=红）。
 	QHash<QString, NodeRunState> nodeRunStates() const;

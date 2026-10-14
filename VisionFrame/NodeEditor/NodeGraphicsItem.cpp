@@ -1,7 +1,7 @@
 #include "NodeGraphicsItem.h"
 #include "PinItem.h"
 #include "NodeEditor/Style.h"
-#include "NodeEditor/ToolFactory.h"
+#include "ToolFactory.h"
 #include <QPainter>
 #include <QFontMetrics>
 #include <QGraphicsSceneMouseEvent>

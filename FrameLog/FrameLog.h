@@ -6,10 +6,14 @@
 #include <string>
 #include <vector>
 
-#ifdef FRAMELOG_EXPORTS
-#define FRAMELOG_API __declspec(dllexport)
+#if defined(_WIN32)
+  #ifdef FRAMELOG_EXPORTS
+  #define FRAMELOG_API __declspec(dllexport)
+  #else
+  #define FRAMELOG_API __declspec(dllimport)
+  #endif
 #else
-#define FRAMELOG_API __declspec(dllimport)
+  #define FRAMELOG_API __attribute__((visibility("default")))
 #endif
 
 // 无 Qt 依赖的轻量日志核心。

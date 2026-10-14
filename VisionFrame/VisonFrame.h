@@ -33,6 +33,7 @@ private slots:
     void onToolDropped(const QString& typeId, const QPointF& scenePos);
     void onNodeEditRequested(const QString& nodeId);
     void onHighlightTick();
+    void onDiagTick();
     void onOpenProject();
     void onSaveProject();
     void onNewProject();
@@ -61,4 +62,5 @@ private:
     QDockWidget*      m_statusDock{ nullptr };
     QAction*          m_statusToggleAction{ nullptr };
     QTimer*           m_statusTimer{ nullptr };
+    QTimer*           m_diagTimer{ nullptr };   // 内存/工具实例诊断采样（10s）
 };

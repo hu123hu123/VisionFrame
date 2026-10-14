@@ -4,7 +4,7 @@
 #include "NodeEditor/NodeEditorView.h"
 #include "NodeEditor/NodeEditorScene.h"
 #include "NodeEditor/ToolPaletteWidget.h"
-#include "NodeEditor/ToolFactory.h"
+#include "ToolFactory.h"
 #include "Display/ImageDisplayWidget.h"
 #include "Log/LogPanelWidget.h"
 #include "TaskStatusPanel.h"
@@ -137,6 +137,11 @@ VisionFrame::VisionFrame(QWidget* parent)
     m_highlightTimer = new QTimer(this);
     connect(m_highlightTimer, &QTimer::timeout, this, &VisionFrame::onHighlightTick);
     m_highlightTimer->start(30);
+
+    // 诊断采样：每 10s 记录进程工作集与存活工具实例数（类别 diag），用于内存排查与修复验证
+    m_diagTimer = new QTimer(this);
+    connect(m_diagTimer, &QTimer::timeout, this, &VisionFrame::onDiagTick);
+    m_diagTimer->start(10000);
 
     applyMode(true);
 
@@ -336,7 +341,7 @@ void VisionFrame::onNodeEditRequested(const QString& nodeId)
         return;
     }
 
-    QWidget* w = e->createWidget(node->tool);
+    QWidget* w = e->createWidget(node->tool.get());
     if (!w)
         return;
 
@@ -348,6 +353,43 @@ void VisionFrame::onNodeEditRequested(const QString& nodeId)
     lay->addWidget(closeBtn);
     connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
     dlg.exec();
+}
+
+#if defined(_WIN32)
+#include <windows.h>
+#include <psapi.h>
+#ifdef _MSC_VER
+#pragma comment(lib, "psapi.lib")
+#endif
+
+static unsigned long long currentProcessRssBytes()
+{
+    PROCESS_MEMORY_COUNTERS pmc{};
+    return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ? pmc.WorkingSetSize : 0;
+}
+#else
+#include <unistd.h>
+
+// Linux：/proc/self/statm 第二个字段为常驻内存页数
+static unsigned long long currentProcessRssBytes()
+{
+    long rssPages = 0;
+    FILE* f = fopen("/proc/self/statm", "r");
+    if (f)
+    {
+        if (fscanf(f, "%*lu %lu", &rssPages) != 1)
+            rssPages = 0;
+        fclose(f);
+    }
+    return (unsigned long long)rssPages * (unsigned long long)sysconf(_SC_PAGESIZE);
+}
+#endif
+
+void VisionFrame::onDiagTick()
+{
+    const unsigned long long rssMB = currentProcessRssBytes() / (1024ULL * 1024ULL);
+    VFL_INFO("diag") << "workingSet=" << rssMB
+                     << "MB, liveTools=" << FrameToolBase::liveToolCount();
 }
 
 void VisionFrame::onHighlightTick()

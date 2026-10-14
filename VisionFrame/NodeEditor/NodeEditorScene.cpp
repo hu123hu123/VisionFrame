@@ -2,7 +2,7 @@
 #include "NodeGraphicsItem.h"
 #include "PinItem.h"
 #include "WireItem.h"
-#include "NodeEditor/ToolFactory.h"
+#include "ToolFactory.h"
 #include <QDebug>
 
 NodeEditorScene::NodeEditorScene(QObject* parent)
@@ -61,7 +61,7 @@ void NodeEditorScene::addNode(const QString& typeId, const QPointF& scenePos)
     n.toolTypeId = typeId;
     n.title = ToolFactory::instance().displayName(typeId);
     n.pos = scenePos;
-    n.tool = tool;
+    n.tool.reset(tool);
     m_graph->nodes.append(n);
 
     rebuild();
@@ -87,10 +87,7 @@ void NodeEditorScene::deleteSelection()
         {
             const QString id = ni->nodeId();
             if (ni->nodeData())
-            {
-                delete ni->nodeData()->tool;
-                ni->nodeData()->tool = nullptr;
-            }
+                ni->nodeData()->tool = nullptr; // 归还所有权（shared_ptr 自动释放）
             for (int i = m_graph->edges.size() - 1; i >= 0; --i)
                 if (m_graph->edges[i].fromNode == id || m_graph->edges[i].toNode == id)
                     m_graph->edges.removeAt(i);

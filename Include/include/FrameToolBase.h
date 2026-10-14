@@ -3,11 +3,17 @@
 #include <vector>
 #include <map>
 #include <any>
+#include <atomic>
 
-#ifdef FARMETOOLBASE_EXPORTS
-#define FARMETOOLBASE_API __declspec(dllexport)
+#if defined(_WIN32)
+  #ifdef FARMETOOLBASE_EXPORTS
+  #define FARMETOOLBASE_API __declspec(dllexport)
+  #else
+  #define FARMETOOLBASE_API __declspec(dllimport)
+  #endif
 #else
-#define FARMETOOLBASE_API __declspec(dllimport)
+  // Linux/macOS：默认隐藏符号时显式导出公共接口
+  #define FARMETOOLBASE_API __attribute__((visibility("default")))
 #endif
 
 // 工具执行结果。
@@ -36,7 +42,12 @@ using NodeData = std::any;
 class FARMETOOLBASE_API FrameToolBase
 {
 public:
-	virtual ~FrameToolBase() = default;
+	FrameToolBase();
+	virtual ~FrameToolBase();
+
+	// 诊断：当前存活工具实例数（构造 +1 / 析构 -1），用于内存泄漏排查。
+	static int liveToolCount();
+
 	virtual std::string ToolName() = 0;
 	virtual ToolResult execute() = 0;
 	virtual void LoadParam(std::string strFilePath) = 0;
@@ -63,4 +74,7 @@ public:
 		(void)in; (void)out;
 		return execute();
 	}
+
+private:
+	static std::atomic<int> s_liveCount; // 存活实例计数（定义于 FrameToolBase.cpp）
 };

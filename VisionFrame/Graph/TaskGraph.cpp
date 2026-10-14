@@ -209,7 +209,7 @@ void TaskGraph::fromJson(const QJsonObject& obj, const std::function<FrameToolBa
         n.title = o["title"].toString();
         n.pos = QPointF(o["x"].toDouble(), o["y"].toDouble());
         if (factory)
-            n.tool = factory(n.toolTypeId);
+            n.tool.reset(factory(n.toolTypeId));
         const QJsonObject po = o["params"].toObject();
         if (!po.isEmpty() && n.tool)
         {

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "FrameLog.h"
+#include "OsCompat.h"
 
 #include <algorithm>
 #include <chrono>
@@ -35,7 +36,7 @@ namespace vflog
             return Level::Info;
         for (int i = (int)Level::Trace; i <= (int)Level::Fatal; ++i)
         {
-            if (_stricmp(levelName((Level)i), name) == 0)
+            if (os::strcasecmpSafe(levelName((Level)i), name) == 0)
                 return (Level)i;
         }
         return Level::Info;
@@ -60,7 +61,7 @@ namespace vflog
         {
             std::time_t t = (std::time_t)(ms / 1000);
             std::tm tmb{};
-            localtime_s(&tmb, &t);
+            os::localtimeSafe(t, &tmb);
             TmParts p{};
             p.year = tmb.tm_year + 1900;
             p.mon = tmb.tm_mon + 1;
@@ -98,28 +99,10 @@ namespace vflog
             return stem + "_" + std::to_string(n) + suffix;
         }
 
-        // 默认为 exe 同级的 logs 目录
+        // 默认为 exe 同级的 logs 目录（路径分隔符统一 '/'，Windows 同样接受）
         std::string defaultLogDir()
         {
-            wchar_t exePath[MAX_PATH] = { 0 };
-            if (GetModuleFileNameW(nullptr, exePath, MAX_PATH) == 0)
-                return "logs";
-            wchar_t* slash = wcsrchr(exePath, L'\\');
-            if (slash)
-                *slash = L'\0';
-            char utf8[MAX_PATH * 4] = { 0 };
-            WideCharToMultiByte(CP_UTF8, 0, exePath, -1, utf8, sizeof(utf8), nullptr, nullptr);
-            return std::string(utf8) + "\\logs";
-        }
-
-        std::string wideToUtf8(const std::wstring& w)
-        {
-            if (w.empty())
-                return std::string();
-            int n = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr);
-            std::string out(n, '\0');
-            WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), &out[0], n, nullptr, nullptr);
-            return out;
+            return os::exeDirUtf8() + "/logs";
         }
     } // namespace
 

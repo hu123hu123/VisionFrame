@@ -34,4 +34,10 @@ private:
     Ui::ImageDisplayWidget* ui{ nullptr };
     QTimer* m_timer{ nullptr };
     QVector<TaskItem*> m_tasks;
+    // 刷新去重：仅当任务/节点/输出引脚变化或帧计数推进时才做图像转换与重绘
+    // （否则 33ms 定时器每 tick 深拷贝整图，任务跑过一次后 UI 即持续卡顿）
+    TaskItem* m_lastTask{ nullptr };
+    QString   m_lastNodeId;
+    QString   m_lastOutName;
+    int       m_lastFrame{ -1 };
 };

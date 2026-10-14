@@ -1,4 +1,6 @@
 #include "ToolFactory.h"
+#include "FrameToolPlugin.h"
+
 #include "ImageSourceTool.h"
 #include "ImageSourceToolWidget.h"
 #include "ImageBlurTool.h"
@@ -8,56 +10,24 @@
 #include "TemplateMatchToolWidget.h"
 #include "AffineTransformTool.h"
 #include "AffineTransformToolWidget.h"
+#include "ImageSaveTool.h"
+#include "ImageSaveToolWidget.h"
 #include <QObject>
 
-ToolFactory& ToolFactory::instance()
+// =============================================================================
+// FrameImageTools 工具插件导出：把本插件全部图像工具注册进宿主 ToolFactory。
+// 注册内容由原宿主 registerBuiltinTools() 迁移而来，工具行为与 typeId 不变。
+// =============================================================================
+
+VF_PLUGIN_EXPORT int vfPluginApiVersion()
 {
-    static ToolFactory s;
-    return s;
+    return VF_PLUGIN_API_VERSION;
 }
 
-void ToolFactory::registerTool(const ToolEntry& e)
+VF_PLUGIN_EXPORT void vfRegisterTools(ToolFactory* f)
 {
-    m_tools.append(e);
-}
-
-const QVector<ToolEntry>& ToolFactory::tools() const
-{
-    return m_tools;
-}
-
-const ToolEntry* ToolFactory::find(const QString& typeId) const
-{
-    for (const auto& e : m_tools)
-        if (e.typeId == typeId)
-            return &e;
-    return nullptr;
-}
-
-FrameToolBase* ToolFactory::create(const QString& typeId) const
-{
-    const ToolEntry* e = find(typeId);
-    return (e && e->create) ? e->create() : nullptr;
-}
-
-QVector<QString> ToolFactory::categories() const
-{
-    QVector<QString> out;
-    for (const auto& e : m_tools)
-        if (!out.contains(e.category))
-            out.append(e.category);
-    return out;
-}
-
-QString ToolFactory::displayName(const QString& typeId) const
-{
-    const ToolEntry* e = find(typeId);
-    return e ? e->displayName : typeId;
-}
-
-void registerBuiltinTools()
-{
-    ToolFactory& f = ToolFactory::instance();
+    if (!f)
+        return;
 
     ToolEntry src;
     src.typeId = "ImageSourceTool";
@@ -72,7 +42,7 @@ void registerBuiltinTools()
             [tool](const QString& p) { tool->setImagePath(p.toStdString()); });
         return w;
     };
-    f.registerTool(src);
+    f->registerTool(src);
 
     ToolEntry blur;
     blur.typeId = "ImageBlurTool";
@@ -87,15 +57,15 @@ void registerBuiltinTools()
             [tool](int k) { tool->setKernelSize(k); });
         return w;
     };
-    f.registerTool(blur);
+    f->registerTool(blur);
 
     ToolEntry gray;
     gray.typeId = "ImageGrayscaleTool";
-    gray.displayName = QString::fromUtf8("灰度");
+    gray.displayName = QString::fromUtf8("灰度二值化");
     gray.category = QString::fromUtf8("图像处理");
     gray.create = []() -> FrameToolBase* { return new ImageGrayscaleTool(); };
     gray.createWidget = nullptr;
-    f.registerTool(gray);
+    f->registerTool(gray);
 
     ToolEntry match;
     match.typeId = "TemplateMatchTool";
@@ -117,7 +87,7 @@ void registerBuiltinTools()
             [tool](const cv::Mat& tpl) { tool->setTemplate(tpl); });
         return w;
     };
-    f.registerTool(match);
+    f->registerTool(match);
 
     ToolEntry affine;
     affine.typeId = "AffineTransformTool";
@@ -142,5 +112,20 @@ void registerBuiltinTools()
             });
         return w;
     };
-    f.registerTool(affine);
+    f->registerTool(affine);
+
+    ToolEntry save;
+    save.typeId = "ImageSaveTool";
+    save.displayName = QString::fromUtf8("图像保存");
+    save.category = QString::fromUtf8("图像处理");
+    save.create = []() -> FrameToolBase* { return new ImageSaveTool(); };
+    save.createWidget = [](FrameToolBase* t) -> class QWidget* {
+        auto* tool = static_cast<ImageSaveTool*>(t);
+        auto* w = new ImageSaveToolWidget();
+        w->setSavePath(tool->savePath());
+        QObject::connect(w, &ImageSaveToolWidget::changed, w,
+            [tool, w]() { tool->setSavePath(w->savePath()); });
+        return w;
+    };
+    f->registerTool(save);
 }

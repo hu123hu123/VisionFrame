@@ -18,7 +18,7 @@ add_executable(VisionFrame WIN32
     NodeEditor/PinItem.cpp NodeEditor/PinItem.h
     NodeEditor/WireItem.cpp NodeEditor/WireItem.h
     NodeEditor/ToolPaletteWidget.cpp NodeEditor/ToolPaletteWidget.h
-    NodeEditor/ToolFactory.cpp NodeEditor/ToolFactory.h
+    NodeEditor/ToolPluginManager.cpp NodeEditor/ToolPluginManager.h
     Display/ImageDisplayWidget.cpp Display/ImageDisplayWidget.h
     Display/ImageDisplayWidget.ui
     Log/QtLogBridge.cpp Log/QtLogBridge.h
@@ -27,15 +27,17 @@ add_executable(VisionFrame WIN32
     TaskStatusPanel.cpp TaskStatusPanel.h
 )
 
-target_compile_definitions(VisionFrame PRIVATE
-    _WINDOWS
-    WIN32_LEAN_AND_MEAN
-)
-
+if(WIN32)
+    target_compile_definitions(VisionFrame PRIVATE
+        _WINDOWS
+        WIN32_LEAN_AND_MEAN
+    )
+endif()
 target_include_directories(VisionFrame PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}           # 使 Graph/、NodeEditor/、Display/ 相对包含可解析
     ${CMAKE_SOURCE_DIR}/FrameQueueTool    # 引用静态库内部头（FrameEnQueueTool.h 等）
     ${CMAKE_SOURCE_DIR}/FrameImageView    # 引用 ImageViewWidget.h 等对外头
+    ${CMAKE_SOURCE_DIR}/FrameToolRegistry # 引用 ToolFactory.h / FrameToolPlugin.h（工具注册表）
     ${VF_INCLUDE_DIR}                     # 引用 Include/include 中的对外头
     ${OpenCV_INCLUDE_DIRS}
 )
@@ -48,7 +50,7 @@ target_link_libraries(VisionFrame PRIVATE
     FrameCameraBase
     FrameImageView
     FrameQueueTool
-    FrameImageTools
+    FrameToolRegistry
     FrameLog
     Qt5::Core Qt5::Gui Qt5::Widgets
     ${OpenCV_LIBS}
@@ -57,9 +59,13 @@ target_link_libraries(VisionFrame PRIVATE
 set_target_properties(VisionFrame PROPERTIES
     OUTPUT_NAME       "VisionFrame"
     WIN32_EXECUTABLE  TRUE
-    LINK_FLAGS        "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
     RUNTIME_OUTPUT_DIRECTORY "${VF_APP_DIR}"
 )
+if(MSVC)
+    set_target_properties(VisionFrame PROPERTIES
+        LINK_FLAGS        "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
+    )
+endif()
 
 # 业务 DLL 延迟加载：不在启动时解析导入表，而在首次调用时加载
 # 这样 main() 中的 SetDllDirectoryW("...\Bin") 先执行，延迟加载的业务 DLL
@@ -81,13 +87,15 @@ foreach(cfg DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
 endforeach()
 
 # =============================================================================
-# 构建后拷贝第三方运行期 DLL 到 exe 同级目录（App/）
+# 构建后拷贝第三方运行期 DLL 到 exe 同级目录（App/）—— 仅 Windows
+# Linux 下 Qt/OpenCV 用系统安装，内部共享库由 RPATH($ORIGIN) 定位，无需拷贝
 #   - Qt5Cored / Qt5Core, Qt5Guid / Qt5Gui, Qt5Widgetsd / Qt5Widgets
 #   - qwindowsd.dll / qwindows.dll (platforms 插件)
 #   - opencv_world4120d.dll / opencv_world4120.dll
 # 业务 DLL（FrameToolBase.dll 等）通过 /DELAYLOAD 延迟加载，留在 App/Bin/ 即可。
 # 第三方 DLL 是隐式链接，必须在 exe 同级目录，Windows 加载器在 main() 之前解析。
 # =============================================================================
+if(WIN32)
 set(QT_BIN      "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/bin"                 CACHE PATH "Qt bin 目录")
 set(QT_PLUGINS  "D:/Qt/Qt5.14.2/5.14.2/msvc2017_64/plugins/platforms"   CACHE PATH "Qt platforms 插件目录")
 set(OPENCV_BIN  "${CMAKE_SOURCE_DIR}/Include/opencv4120/x64/bin"        CACHE PATH "OpenCV bin 目录")
@@ -113,5 +121,8 @@ add_custom_command(TARGET VisionFrame POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameImageView>"   "$<TARGET_FILE_DIR:VisionFrame>/FrameImageView.dll"
     # FrameLog.dll（进程级日志单例，exe 隐式链接，需随 exe 放置以便 main() 之前由加载器解析）
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameLog>"         "$<TARGET_FILE_DIR:VisionFrame>/FrameLog.dll"
+    # FrameToolRegistry.dll（工具注册表，exe 隐式链接，需随 exe 放置；工具插件亦依赖它）
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:FrameToolRegistry>" "$<TARGET_FILE_DIR:VisionFrame>/FrameToolRegistry.dll"
     COMMENT "Copy third-party runtime DLLs to exe directory"
 )
+endif() # WIN32

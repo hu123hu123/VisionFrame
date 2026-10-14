@@ -136,6 +136,11 @@ void ImageDisplayWidget::reloadPixmap()
     const QString nodeId = ui->m_toolCombo->currentData().toString();
     const QString outName = ui->m_outputCombo->currentData().toString();
 
+    // 去重：任务/选择/帧计数均未变化时跳过（空转定时器不做图像转换与重绘）
+    const int fc = t ? t->frameCounter() : -1;
+    if (t == m_lastTask && nodeId == m_lastNodeId && outName == m_lastOutName && fc == m_lastFrame)
+        return;
+
     QImage img;
     if (t && !nodeId.isEmpty() && !outName.isEmpty())
     {
@@ -151,6 +156,11 @@ void ImageDisplayWidget::reloadPixmap()
             }
         }
     }
+
+    m_lastTask = t;
+    m_lastNodeId = nodeId;
+    m_lastOutName = outName;
+    m_lastFrame = fc;
 
     ui->m_view->setImage(img);
 }

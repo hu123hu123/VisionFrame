@@ -12,12 +12,14 @@ add_library(FrameCameraBase SHARED
 
 target_precompile_headers(FrameCameraBase PRIVATE pch.h)
 
-target_compile_definitions(FrameCameraBase PRIVATE
-    FRAMECAMERABASE_EXPORTS
-    _WINDOWS
-    _USRDLL
-    WIN32_LEAN_AND_MEAN
-)
+target_compile_definitions(FrameCameraBase PRIVATE FRAMECAMERABASE_EXPORTS)
+if(WIN32)
+    target_compile_definitions(FrameCameraBase PRIVATE
+        _WINDOWS
+        _USRDLL
+        WIN32_LEAN_AND_MEAN
+    )
+endif()
 
 target_include_directories(FrameCameraBase PRIVATE
     ${OpenCV_INCLUDE_DIRS}
@@ -28,8 +30,12 @@ target_link_libraries(FrameCameraBase PRIVATE ${OpenCV_LIBS})
 set_target_properties(FrameCameraBase PROPERTIES
     OUTPUT_NAME           "FrameCameraBase"
     WINDOWS_EXPORT_ALL_SYMBOLS OFF
-    LINK_FLAGS            "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
 )
+if(MSVC)
+    set_target_properties(FrameCameraBase PROPERTIES
+        LINK_FLAGS            "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
+    )
+endif()
 
 add_custom_command(TARGET FrameCameraBase POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

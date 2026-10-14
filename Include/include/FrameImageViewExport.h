@@ -1,7 +1,11 @@
 #pragma once
 
-#ifdef FRAMEIMAGEVIEW_EXPORTS
-#define FRAMEIMAGEVIEW_API __declspec(dllexport)
+#if defined(_WIN32)
+  #ifdef FRAMEIMAGEVIEW_EXPORTS
+  #define FRAMEIMAGEVIEW_API __declspec(dllexport)
+  #else
+  #define FRAMEIMAGEVIEW_API __declspec(dllimport)
+  #endif
 #else
-#define FRAMEIMAGEVIEW_API __declspec(dllimport)
+  #define FRAMEIMAGEVIEW_API __attribute__((visibility("default")))
 #endif

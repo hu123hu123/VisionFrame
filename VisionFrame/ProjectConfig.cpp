@@ -5,7 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "NodeEditor/ToolFactory.h"
+#include "ToolFactory.h"
 
 void ProjectConfig::serialize(QDataStream& out) const
 {

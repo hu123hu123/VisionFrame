@@ -47,6 +47,15 @@ void TaskItem::run()
 		if (!m_stop)
 			QThread::msleep(m_frameIntervalMs.load());
 	}
+	// 停止后各节点最后一帧输出不再被引用：统一释放，避免图像常驻内存
+	releaseGraphOutputs();
+}
+
+void TaskItem::releaseGraphOutputs()
+{
+	QMutexLocker lock(&m_outputMutex);
+	for (auto& n : m_graph.nodes)
+		n.outputs.clear();
 }
 
 void TaskItem::doTask()

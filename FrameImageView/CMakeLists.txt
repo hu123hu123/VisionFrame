@@ -10,12 +10,14 @@ add_library(FrameImageView SHARED
     RoiImageViewWidget.cpp RoiImageViewWidget.h
 )
 
-target_compile_definitions(FrameImageView PRIVATE
-    FRAMEIMAGEVIEW_EXPORTS
-    _WINDOWS
-    _USRDLL
-    WIN32_LEAN_AND_MEAN
-)
+target_compile_definitions(FrameImageView PRIVATE FRAMEIMAGEVIEW_EXPORTS)
+if(WIN32)
+    target_compile_definitions(FrameImageView PRIVATE
+        _WINDOWS
+        _USRDLL
+        WIN32_LEAN_AND_MEAN
+    )
+endif()
 
 # PUBLIC：让下游（VisionFrame / FrameImageTools 等）直接 #include "ImageViewWidget.h"
 # 并能拿到 OpenCV 头路径与 Qt/OpenCV 链接依赖
@@ -32,8 +34,12 @@ target_link_libraries(FrameImageView PUBLIC
 set_target_properties(FrameImageView PROPERTIES
     OUTPUT_NAME           "FrameImageView"
     WINDOWS_EXPORT_ALL_SYMBOLS OFF
-    LINK_FLAGS            "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
 )
+if(MSVC)
+    set_target_properties(FrameImageView PROPERTIES
+        LINK_FLAGS            "/SUBSYSTEM:WINDOWS /MANIFESTUAC:NO"
+    )
+endif()
 
 foreach(_h FrameImageViewExport.h ImageViewWidget.h RectRoiItem.h RoiImageViewWidget.h)
     add_custom_command(TARGET FrameImageView POST_BUILD

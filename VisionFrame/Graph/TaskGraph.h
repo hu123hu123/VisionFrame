@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <memory>
 #include "FrameToolBase.h"
 
 // 节点运行态（供执行高亮）：Idle=默认，Running=执行中(绿)，Success=成功(复原)，Failed=失败(红)。
@@ -21,7 +22,7 @@ struct GraphNodeData
     QString  toolTypeId;               // = FrameToolBase::ToolName()
     QString  title;                    // 显示标题
     QPointF  pos;                      // 场景坐标（节点左上角）
-    FrameToolBase* tool{ nullptr };    // 拥有所有权
+    std::shared_ptr<FrameToolBase> tool;  // 拥有所有权：随节点替换/清空/析构自动释放（修复重载项目泄漏）
     std::map<std::string, NodeData> outputs;  // 最近一次执行输出（按输出引脚名）
 };
 

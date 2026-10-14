@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include "opencv2/opencv.hpp"
 
-#ifdef FRAMECAMERABASE_EXPORTS
-#define FRAMECAMERABASE_API __declspec(dllexport)
+#if defined(_WIN32)
+  #ifdef FRAMECAMERABASE_EXPORTS
+  #define FRAMECAMERABASE_API __declspec(dllexport)
+  #else
+  #define FRAMECAMERABASE_API __declspec(dllimport)
+  #endif
 #else
-#define FRAMECAMERABASE_API __declspec(dllimport)
+  #define FRAMECAMERABASE_API __attribute__((visibility("default")))
 #endif
 class FRAMECAMERABASE_API FrameCameraBase
 {

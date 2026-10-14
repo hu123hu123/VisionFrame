@@ -51,9 +51,15 @@ if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 endif()
 
-# 默认以 x64 为目标架构（与原 MSBuild Release|x64 一致）
-if(NOT CMAKE_VS_PLATFORM_NAME STREQUAL "x64" AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(FATAL_ERROR "VisionFrame 仅支持 x64 架构。请使用 -A x64 (VS) 或默认 64 位生成器。")
+# 默认以 x64 为目标架构（与原 MSBuild Release|x64 一致）；跨平台/边缘部署放行 ARM64
+if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64)|(amd64)|(arm64)|(aarch64)|(ARM64)")
+    message(FATAL_ERROR "VisionFrame 仅支持 x86_64 / ARM64 架构。当前: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+
+# Linux：可执行/共享库运行期相互定位（exe 在 App/，共享库在 App/Bin/，插件在 App/Bin/plugins/）
+if(UNIX)
+    set(CMAKE_BUILD_RPATH   "$ORIGIN;$ORIGIN/Bin;$ORIGIN/..")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/Bin;$ORIGIN/..")
 endif()
 
 # =============================================================================
@@ -77,25 +83,41 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(OPENCV_ROOT     "${CMAKE_SOURCE_DIR}/Include/opencv4120"          CACHE PATH "OpenCV 安装根")
-set(OPENCV_INCLUDE  "${OPENCV_ROOT}/include"                         CACHE PATH "OpenCV 头文件目录")
-set(OPENCV_LIB_DIR  "${OPENCV_ROOT}/x64/lib"                          CACHE PATH "OpenVC 导入库目录")
-set(OPENCV_BIN_DIR  "${OPENCV_ROOT}/x64/bin"                          CACHE PATH "OpenCV DLL 目录")
+# =============================================================================
+# OpenCV（双轨）：优先系统安装（Linux/边缘侧，apt/源码均可），回退仓库自带 Windows 预编译包。
+# 统一暴露为 vf::opencv 目标与 OpenCV_LIBS / OpenCV_INCLUDE_DIRS 变量，下游写法不变。
+# =============================================================================
+add_library(vf::opencv INTERFACE IMPORTED)
 
-# 对外暴露为 IMPORTED 目标，下游 target 直接 link 即可拿到 include 路径与导入库。
-# 通过 IMPORTED_CONFIGURATIONS 让 CMake 按 Debug/Release 选择对应的 .lib/.dll。
-add_library(opencv_world SHARED IMPORTED)
-set_target_properties(opencv_world PROPERTIES
-    IMPORTED_CONFIGURATIONS   "Debug;Release"
-    IMPORTED_LOCATION_DEBUG    "${OPENCV_BIN_DIR}/opencv_world4120d.dll"
-    IMPORTED_LOCATION_RELEASE  "${OPENCV_BIN_DIR}/opencv_world4120.dll"
-    IMPORTED_IMPLIB_DEBUG      "${OPENCV_LIB_DIR}/opencv_world4120d.lib"
-    IMPORTED_IMPLIB_RELEASE    "${OPENCV_LIB_DIR}/opencv_world4120.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${OPENCV_INCLUDE}"
-)
+find_package(OpenCV QUIET)  # 设置 OpenCV_FOUND / OpenCV_INCLUDE_DIRS / OpenCV_LIBS
+if(OpenCV_FOUND)
+    set_target_properties(vf::opencv PROPERTIES INTERFACE_LINK_LIBRARIES "${OpenCV_LIBS}")
+    message(STATUS "OpenCV: 使用系统安装 ${OpenCV_VERSION} (${OpenCV_INCLUDE_DIRS})")
+else()
+    message(STATUS "OpenCV: 未找到系统安装，使用仓库自带 Windows 预编译包 4.1.2.0")
+
+    set(OPENCV_ROOT     "${CMAKE_SOURCE_DIR}/Include/opencv4120"          CACHE PATH "OpenCV 安装根")
+    set(OPENCV_INCLUDE  "${OPENCV_ROOT}/include"                         CACHE PATH "OpenCV 头文件目录")
+    set(OPENCV_LIB_DIR  "${OPENCV_ROOT}/x64/lib"                          CACHE PATH "OpenVC 导入库目录")
+    set(OPENCV_BIN_DIR  "${OPENCV_ROOT}/x64/bin"                          CACHE PATH "OpenCV DLL 目录")
+
+    # 对外暴露为 IMPORTED 目标，下游 target 直接 link 即可拿到 include 路径与导入库。
+    # 通过 IMPORTED_CONFIGURATIONS 让 CMake 按 Debug/Release 选择对应的 .lib/.dll。
+    add_library(opencv_world SHARED IMPORTED)
+    set_target_properties(opencv_world PROPERTIES
+        IMPORTED_CONFIGURATIONS   "Debug;Release"
+        IMPORTED_LOCATION_DEBUG    "${OPENCV_BIN_DIR}/opencv_world4120d.dll"
+        IMPORTED_LOCATION_RELEASE  "${OPENCV_BIN_DIR}/opencv_world4120.dll"
+        IMPORTED_IMPLIB_DEBUG      "${OPENCV_LIB_DIR}/opencv_world4120d.lib"
+        IMPORTED_IMPLIB_RELEASE    "${OPENCV_LIB_DIR}/opencv_world4120.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${OPENCV_INCLUDE}"
+    )
+    set_target_properties(vf::opencv PROPERTIES INTERFACE_LINK_LIBRARIES opencv_world)
+    set(OpenCV_INCLUDE_DIRS "${OPENCV_INCLUDE}")
+endif()
+
 # 提供传统变量给仍使用 ${OpenCV_LIBS} 的旧式写法
-set(OpenCV_INCLUDE_DIRS "${OPENCV_INCLUDE}")
-set(OpenCV_LIBS         "opencv_world")
+set(OpenCV_LIBS "vf::opencv")
 
 # =============================================================================
 # 公共目标：导出 Include/include 与 Include/lib 给上层构建使用
@@ -108,6 +130,7 @@ add_subdirectory(FarmeToolBase)
 add_subdirectory(FrameLog)
 add_subdirectory(FrameCameraBase)
 add_subdirectory(FrameImageView)
+add_subdirectory(FrameToolRegistry)
 add_subdirectory(FrameQueueTool)
 add_subdirectory(FrameImageTools)
 add_subdirectory(VisionFrame)

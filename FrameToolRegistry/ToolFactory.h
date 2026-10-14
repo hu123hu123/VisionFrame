@@ -2,11 +2,13 @@
 #include <QString>
 #include <QVector>
 #include <functional>
+#include "FrameToolRegistryExport.h"
 
 class QWidget;
 class FrameToolBase;
 
 // 工具类型注册项：类型标识 + 显示名 + 分类 + 创建函数 + 参数控件工厂。
+// 由各工具插件 DLL 在 vfRegisterTools 回调中填充并注册。
 struct ToolEntry
 {
     QString typeId;
@@ -17,7 +19,8 @@ struct ToolEntry
 };
 
 // 全局工具注册表（单例），把工具创建与参数控件从 UI 中解耦。
-class ToolFactory
+// 宿主与插件链接同一 FrameToolRegistry.dll，保证唯一实例。
+class FRAMETOOLREGISTRY_API ToolFactory
 {
 public:
     static ToolFactory& instance();
@@ -36,6 +39,3 @@ private:
 
     QVector<ToolEntry> m_tools;
 };
-
-// 注册全部内置工具（main 启动时调用）。
-void registerBuiltinTools();
